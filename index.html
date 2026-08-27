@@ -1,0 +1,1727 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Record Bible">
+<meta name="theme-color" content="#7d3f3f">
+<link rel="manifest" href="manifest.json">
+<title>BIBLE Rec Read 성경 녹음/통독 프로그램</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/moonspam/NanumSquare@2.0/nanumsquare.css">
+<link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@400;700;800&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+<script src="bible-data.js"></script>
+<script src="mosaic-cells.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg-main:#f7f4f0;
+  --brand:#7d3f3f;--brand-dark:#5c2c2c;--brand-light:#f7ece9;--brand-mid:#c98f8f;--brand-soft:#eed9d4;
+  --gold:#c79a3d;--gold-dark:#a67f28;
+  --text:#2b2626;--text-muted:#8a7c7c;--text-dim:#bcaeae;
+  --border:#ece1dd;--radius:12px;
+  --rec:#d64545;
+  --reading-size:18px;
+}
+html,body{height:100%;overflow:hidden}
+body{font-family:'NanumSquare','Nanum Gothic',sans-serif;background:var(--bg-main);color:var(--text);display:flex;flex-direction:column;position:relative}
+body::before{
+  content:'';position:fixed;inset:0;
+  background:url('bg-blur.jpg') center/cover no-repeat;
+  transform:scale(1.05);
+  z-index:-1;
+}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--brand-soft);border-radius:4px}
+
+/* 타이틀 바 */
+.app-title-bar{position:relative;background:linear-gradient(90deg,#f5ecea,#fff,#fbf3e5);padding:8px 20px 16px;border-bottom:1px solid #f0e4e0;text-align:center;flex-shrink:0}
+.app-title{display:flex;align-items:center;justify-content:center;gap:7px;font-family:'NanumSquare','Nanum Gothic',sans-serif}
+.title-bible{font-size:16px;font-weight:800;letter-spacing:0.5px;background:linear-gradient(90deg,var(--brand-dark),#a85c5c,var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent}
+.title-rec{display:inline-flex;align-items:center;gap:3px;font-size:12px;font-weight:800;color:var(--rec)}
+.title-rec-dot{width:6px;height:6px;border-radius:50%;background:var(--rec);animation:rec-pulse 1.2s ease-in-out infinite;flex-shrink:0}
+.title-read{display:inline-flex;align-items:center;gap:3px;font-size:12px;font-weight:800;color:var(--brand-dark)}
+.app-subtitle{font-size:10.5px;letter-spacing:0.5px;color:var(--text-muted);margin-top:3px;font-weight:400}
+
+#date-badge{position:absolute;left:10px;top:8px;width:42px;background:#fff;border-radius:7px;box-shadow:0 3px 8px rgba(120,60,60,0.22);overflow:hidden;text-align:center;font-family:'NanumSquare','Nanum Gothic',sans-serif;border:1px solid var(--brand-soft)}
+.cal-strip{position:relative;height:6px;background:linear-gradient(90deg,var(--brand),#a85c5c)}
+.cal-strip::before,.cal-strip::after{content:'';position:absolute;top:-2px;width:5px;height:5px;border-radius:50%;background:var(--bg-main);border:1px solid var(--brand-mid, var(--brand))}
+.cal-strip::before{left:7px}
+.cal-strip::after{right:7px}
+.cal-month{font-size:7px;font-weight:800;color:#fff;background:var(--brand);padding:1px 0;letter-spacing:0.5px}
+.cal-day-num{font-size:17px;font-weight:800;color:var(--text);line-height:1.1;padding:1px 0 0}
+.cal-weekday{font-size:6.5px;color:var(--text-muted);padding-bottom:2px;font-weight:700;letter-spacing:0.3px}
+
+#cloud-bar{position:absolute;right:12px;top:9px;cursor:pointer;display:flex;align-items:center;gap:4px;font-size:10.5px;padding:4px 11px;border-radius:14px;border:1px solid var(--brand-soft);background:#fff;color:var(--brand-dark);font-family:'NanumSquare','Nanum Gothic',sans-serif;max-width:88px}
+#cloud-icon{flex-shrink:0}
+#cloud-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+#cloud-bar.logged-in{background:#f3e9d8;border-color:var(--gold)}
+.auth-input{width:100%;box-sizing:border-box;border:1px solid var(--brand-soft);border-radius:20px;padding:10px 16px;font-size:14px;font-family:'NanumSquare','Nanum Gothic',sans-serif;margin-top:8px;outline:none;background:#fdfaf9;color:var(--text)}
+.auth-hint{font-size:11px;color:var(--text-muted);margin-top:10px;line-height:1.5;text-align:center}
+.auth-btn-row{display:flex;gap:8px;margin-top:14px}
+.auth-btn-row .brand-save-btn{margin-top:0;flex:1}
+.brand-save-btn{width:100%;margin-top:14px;padding:12px;background:linear-gradient(135deg,var(--brand),#a85c5c);color:#fff;border:none;border-radius:20px;font-size:13px;font-family:'NanumSquare','Nanum Gothic',sans-serif;cursor:pointer;font-weight:700;letter-spacing:0.5px;box-shadow:0 3px 12px rgba(125,63,63,0.3)}
+.auth-btn-secondary{background:linear-gradient(135deg,#c79a3d,#a67f28)!important}
+.cloud-status{display:flex;align-items:center;justify-content:space-between;background:var(--brand-light);border:1px solid var(--brand-soft);border-radius:16px;padding:10px 14px;margin-bottom:6px}
+.cloud-status-email{font-size:13px;color:var(--brand-dark);font-weight:700}
+.cloud-logout-btn{background:none;border:1px solid var(--brand-soft);border-radius:16px;padding:5px 12px;font-size:11px;color:var(--brand-dark);cursor:pointer;font-family:'NanumSquare','Nanum Gothic',sans-serif}
+
+.scroll-area{flex:1;overflow-y:auto;padding:12px 14px 220px}
+
+/* 필드 카드 */
+.field-card{margin-bottom:8px;border-radius:var(--radius);overflow:hidden;background:rgba(255,255,255,0.6);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);border:1px solid var(--border);box-shadow:0 2px 8px rgba(120,60,60,0.06);padding:10px 14px}
+.field-card.brand{border-left:3px solid var(--brand)}
+.field-row{display:flex;gap:8px;align-items:center}
+.field-label{font-size:11px;font-weight:700;letter-spacing:1px;color:var(--text-muted);margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.date-input{border:1px solid var(--brand-soft);border-radius:20px;padding:7px 14px;font-size:14px;font-family:'NanumSquare','Nanum Gothic',sans-serif;outline:none;background:#fff;color:var(--text)}
+
+/* 성경검색 */
+.bible-version-select{flex-shrink:0;border:1px solid var(--brand-soft);border-radius:20px;padding:7px 8px;font-size:12px;font-family:'NanumSquare','Nanum Gothic',sans-serif;color:var(--brand-dark);background:#fff;outline:none;cursor:pointer}
+.bible-search-input{flex:1 1 100px;min-width:0;border:1px solid var(--brand-soft);border-radius:20px;padding:7px 12px;font-size:14px;font-family:'NanumSquare','Nanum Gothic',sans-serif;outline:none;background:#fff}
+.bible-search-input:focus{border-color:var(--brand)}
+.bible-search-btn{flex-shrink:0;background:var(--brand);color:#fff;border:none;border-radius:20px;padding:7px 16px;font-size:13px;font-family:'NanumSquare','Nanum Gothic',sans-serif;cursor:pointer;font-weight:700}
+.bible-search-btn:hover{background:var(--brand-dark)}
+.search-hint{font-size:11px;color:var(--text-dim);margin-top:6px}
+
+/* 본문 카드 */
+.reading-card{margin-bottom:8px;border-radius:var(--radius);overflow:hidden;background:rgba(255,255,255,0.7);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);border:1px solid var(--border);box-shadow:0 2px 8px rgba(120,60,60,0.06)}
+.reading-header{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--border);background:linear-gradient(135deg,var(--brand-light),#fff)}
+.reading-ref{font-size:14px;font-weight:800;color:var(--brand-dark);letter-spacing:0.3px}
+.font-ctrl{display:flex;align-items:center;gap:2px}
+.font-btn{width:28px;height:28px;border-radius:50%;border:1px solid var(--brand-soft);background:#fff;color:var(--brand-dark);font-size:13px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.font-btn:hover{background:var(--brand-light)}
+.font-size-label{font-size:11px;color:var(--text-muted);min-width:32px;text-align:center}
+.reading-body{padding:14px 16px 18px;max-height:62vh;overflow-y:auto}
+.reading-body.empty{color:var(--text-dim);font-size:14px;text-align:center;padding:30px 10px}
+.complete-btn{flex-shrink:0;border:1px solid var(--brand-soft);background:#fff;color:var(--brand-dark);border-radius:16px;padding:6px 12px;font-size:11.5px;font-family:'NanumSquare','Nanum Gothic',sans-serif;font-weight:700;cursor:pointer;white-space:nowrap}
+.complete-btn:hover{background:var(--brand-light)}
+.complete-btn.done{background:var(--brand);color:#fff;border-color:var(--brand)}
+
+/* 진행 위젯 (상단 상시 표시) */
+.top-status-row{display:flex;align-items:stretch;border-bottom:1px solid #f0e4e0;flex-shrink:0}
+.progress-widget{flex:1;min-width:0;display:flex;align-items:center;gap:10px;padding:8px 12px;background:linear-gradient(90deg,#f5ecea,#fff,#fbf3e5);cursor:pointer}
+.progress-widget canvas{border-radius:6px;background:#fff;box-shadow:0 1px 4px rgba(120,60,60,0.15);flex-shrink:0}
+.rec-timer-box{flex:0 0 104px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:6px 6px;background:#fff;border-left:1px solid var(--border)}
+.rec-timer-box .rec-timer{font-size:19px}
+.rec-timer-box .rec-label{font-size:9.5px;margin-top:1px;white-space:nowrap}
+
+.rec-status-extra{text-align:center}
+.rec-status-extra:not(:empty) .bar-row{margin-top:8px}
+audio.rec-player{width:100%;margin-top:10px}
+.btn-outline{background:#fff;color:var(--brand-dark);border:1px solid var(--brand-soft);box-shadow:none}
+.btn-outline:hover{background:var(--brand-light)}
+.progress-text{flex:1;min-width:0}
+.progress-count{font-size:13px;font-weight:800;color:var(--brand-dark)}
+.progress-hint{font-size:10px;color:var(--text-dim);margin-top:1px}
+.progress-bar-track{height:5px;background:var(--brand-light);border-radius:3px;margin-top:5px;overflow:hidden}
+.progress-bar-fill{height:100%;background:linear-gradient(90deg,var(--brand),var(--gold));border-radius:3px;transition:width 0.3s}
+
+/* 모달 */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(60,30,30,0.35);backdrop-filter:blur(4px);z-index:400;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:#fff;border-radius:20px;width:min(420px,90vw);max-height:85vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(60,30,30,0.2);border:1px solid var(--brand-soft)}
+.modal-header{padding:16px 18px 12px;border-bottom:1px solid #f2e8e5;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.modal-title{font-size:15px;font-weight:800;color:var(--brand-dark);letter-spacing:0.3px}
+.modal-close{background:none;border:none;font-size:22px;cursor:pointer;color:var(--text-dim);line-height:1}
+.modal-close:hover{color:var(--text-muted)}
+.modal-body{overflow-y:auto;padding:16px 18px 20px;text-align:center}
+
+.chk-summary{font-size:13px;font-weight:800;color:var(--brand-dark);margin-bottom:12px}
+.hist-item{display:flex;align-items:center;gap:12px;padding:12px 10px;border-bottom:1px solid var(--border);cursor:pointer}
+.hist-item:hover{background:var(--brand-light)}
+.hist-item:last-child{border-bottom:none}
+.hist-num{flex-shrink:0;width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--brand),#a85c5c);color:#fff;font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center}
+.hist-info{flex:1;min-width:0}
+.hist-dates{font-size:13px;font-weight:700;color:var(--text)}
+.hist-days{font-size:11px;color:var(--text-muted);margin-top:2px}
+.hist-arrow{flex-shrink:0;color:var(--text-dim);font-size:18px}
+.admin-item{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px;border-bottom:1px solid var(--border)}
+.admin-item:last-child{border-bottom:none}
+.admin-email{font-size:12.5px;font-weight:700;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:180px}
+.admin-count{flex-shrink:0;font-size:12px;font-weight:800;color:var(--brand-dark);background:var(--brand-light);padding:3px 10px;border-radius:12px}
+
+.logcal-nav{display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:10px}
+.logcal-nav button{background:none;border:1px solid var(--brand-soft);border-radius:16px;padding:4px 12px;font-size:13px;color:var(--brand-dark);cursor:pointer;font-family:'NanumSquare','Nanum Gothic',sans-serif}
+.logcal-nav button:hover{background:var(--brand-light)}
+#logcal-month-label{font-size:14px;font-weight:800;color:var(--brand-dark);min-width:90px;text-align:center}
+.logcal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:4px}
+.logcal-weekday{text-align:center;font-size:11px;color:var(--text-muted);font-weight:700;padding:2px 0}
+.logcal-cell{aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:10px;font-size:13px;color:var(--text);cursor:pointer;position:relative;transition:background 0.15s}
+.logcal-cell:hover{background:var(--brand-light)}
+.logcal-cell.empty{cursor:default;visibility:hidden}
+.logcal-cell.today{border:1.5px solid var(--brand)}
+.logcal-cell.has-log{background:rgba(125,63,63,0.1);font-weight:800;color:var(--brand-dark)}
+.logcal-cell.selected{background:var(--brand);color:#fff}
+.logcal-dot{width:5px;height:5px;border-radius:50%;background:var(--brand);margin-top:2px}
+.logcal-cell.selected .logcal-dot{background:#fff}
+.logday-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:1px solid var(--border);font-size:13px}
+.logday-item:last-child{border-bottom:none}
+.logday-item-icon{flex-shrink:0}
+.chk-book{margin-bottom:14px}
+.chk-book-name{font-size:12.5px;font-weight:800;color:var(--brand-dark);margin-bottom:5px;display:flex;justify-content:space-between;align-items:baseline}
+.chk-book-count{font-size:10px;color:var(--text-dim);font-weight:400}
+.chk-grid{display:flex;flex-wrap:wrap;gap:4px}
+.chk-cell{width:21px;height:21px;border-radius:5px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--text-dim);background:#fdfcfb;flex-shrink:0}
+.chk-cell.done{background:var(--brand);border-color:var(--brand);color:#fff;font-weight:700}
+.rv-line{display:flex;align-items:flex-start;gap:8px;margin-bottom:8px;font-size:var(--reading-size);line-height:1.7}
+.rv-num{flex:0 0 auto;font-weight:800;color:var(--gold-dark);font-size:0.7em;padding-top:0.3em}
+.rv-text{flex:1;color:var(--text)}
+
+/* 녹음 상태 카드 */
+.rec-timer{font-size:28px;font-weight:800;color:var(--text);font-variant-numeric:tabular-nums;letter-spacing:1px}
+.rec-timer.live{color:var(--rec)}
+.rec-dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--rec);margin-right:8px;vertical-align:middle;animation:rec-pulse 1s ease-in-out infinite}
+.rec-dot.hidden{display:none}
+@keyframes rec-pulse{0%,100%{opacity:1}50%{opacity:0.25}}
+.rec-label{font-size:12px;color:var(--text-muted);margin-top:4px;letter-spacing:0.5px}
+.rec-filename{font-size:12px;color:var(--brand-dark);margin-top:8px;font-weight:700;word-break:break-all}
+
+/* 하단 고정 버튼 바 */
+.bottom-bar{position:fixed;bottom:0;left:0;right:0;background:rgba(255,255,255,0.97);backdrop-filter:blur(10px);border-top:1px solid var(--border);display:flex;flex-direction:column;gap:6px;padding:8px 10px calc(8px + env(safe-area-inset-bottom));z-index:100}
+.bar-row{display:flex;gap:5px}
+.btn{flex:1;padding:11px 0;border-radius:18px;font-family:'NanumSquare','Nanum Gothic',sans-serif;font-size:11.5px;font-weight:800;cursor:pointer;border:none;display:flex;align-items:center;justify-content:center;gap:3px;letter-spacing:0.1px;transition:all 0.2s;min-width:0}
+.btn-rec{background:linear-gradient(135deg,var(--rec),#b03434);color:#fff;box-shadow:0 3px 12px rgba(214,69,69,0.35)}
+.btn-rec:hover{box-shadow:0 5px 18px rgba(214,69,69,0.5);transform:translateY(-1px)}
+.btn-rec.recording{background:linear-gradient(135deg,#555,#333)}
+.btn-pause{background:linear-gradient(135deg,var(--gold),#a67f28);color:#fff;box-shadow:0 3px 12px rgba(199,154,61,0.35)}
+.btn-pause:hover{box-shadow:0 5px 18px rgba(199,154,61,0.5);transform:translateY(-1px)}
+.btn-pause.paused{background:linear-gradient(135deg,#4a8f5c,#357045)}
+.btn-save{background:linear-gradient(135deg,var(--brand),#a85c5c);color:#fff;box-shadow:0 3px 12px rgba(125,63,63,0.3)}
+.btn-save:hover{box-shadow:0 5px 18px rgba(125,63,63,0.5);transform:translateY(-1px)}
+.btn-share{background:linear-gradient(135deg,#5c7a8a,#3f5b6a);color:#fff;box-shadow:0 3px 12px rgba(60,90,105,0.3)}
+.btn-share:hover{box-shadow:0 5px 18px rgba(60,90,105,0.5);transform:translateY(-1px)}
+.btn:disabled{opacity:0.4;cursor:not-allowed;box-shadow:none;transform:none}
+
+/* 토스트 */
+.toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:rgba(92,44,44,0.92);color:#fff;padding:10px 20px;border-radius:16px;font-size:12px;font-family:'NanumSquare','Nanum Gothic',sans-serif;opacity:0;transition:opacity 0.3s;pointer-events:none;white-space:normal;max-width:82vw;text-align:center;line-height:1.5;z-index:300;letter-spacing:0.3px;box-shadow:0 4px 16px rgba(92,44,44,0.3)}
+.toast.show{opacity:1}
+</style>
+</head>
+<body>
+
+<div class="app-title-bar">
+  <div id="date-badge" onclick="openDailyLogModal()" style="cursor:pointer">
+    <div class="cal-strip"></div>
+    <div class="cal-month" id="cal-month-label"></div>
+    <div class="cal-day-num" id="cal-day-num"></div>
+    <div class="cal-weekday" id="cal-weekday-label"></div>
+  </div>
+  <div class="app-title">
+    <span class="title-bible">BIBLE</span>
+    <span class="title-rec"><span class="title-rec-dot"></span>Rec</span>
+    <span class="title-read">📖Read</span>
+  </div>
+  <div class="app-subtitle">성경 녹음/통독 프로그램</div>
+  <div id="cloud-bar" onclick="openModal('auth-modal')">
+    <span id="cloud-icon">☁️</span><span id="cloud-text">로그인</span>
+  </div>
+</div>
+
+<div class="top-status-row">
+  <div class="progress-widget" onclick="openProgressModal()">
+    <canvas id="mini-mosaic" width="56" height="56"></canvas>
+    <div class="progress-text">
+      <div class="progress-count" id="progress-count">0 / 1189 장 완료</div>
+      <div class="progress-bar-track"><div class="progress-bar-fill" id="progress-bar-fill" style="width:0%"></div></div>
+      <div class="progress-hint">탭해서 크게 보기</div>
+    </div>
+  </div>
+  <div class="rec-timer-box">
+    <div><span class="rec-dot hidden" id="rec-dot"></span><span class="rec-timer" id="rec-timer">00:00</span></div>
+    <div class="rec-label" id="rec-label">녹음 대기 중</div>
+  </div>
+</div>
+
+<div class="scroll-area">
+
+  <!-- 성경검색 (1장 단위) -->
+  <div class="field-card brand">
+    <div class="field-label" onclick="toggleSearchBar()" style="cursor:pointer;justify-content:space-between">
+      <span>📖 성경 본문 (1장씩)</span>
+      <span id="search-toggle-chevron" style="color:var(--text-dim);font-size:11px">▾ 숨기기</span>
+    </div>
+    <div id="bible-search-body">
+      <div class="field-row">
+        <select id="bible-version" class="bible-version-select">
+          <option value="GAEGYE">개역개정</option>
+          <option value="EASY">쉬운성경</option>
+          <option value="SAEBEON">새번역</option>
+          <option value="NIV">NIV</option>
+        </select>
+        <input class="bible-search-input" id="bible-query" placeholder="예) 마태복음 1 / 마 1"
+          onkeydown="if(event.key==='Enter')loadChapter()">
+        <button class="bible-search-btn" onclick="loadChapter()">불러오기</button>
+      </div>
+      <div class="search-hint">장 전체를 불러와요. 절 번호를 적어도 장만 인식돼요.</div>
+    </div>
+  </div>
+
+  <!-- 본문 -->
+  <div class="reading-card">
+    <div class="reading-header" style="flex-wrap:wrap;row-gap:6px">
+      <span class="reading-ref" id="reading-ref">본문을 불러와주세요</span>
+      <div class="font-ctrl">
+        <button class="font-btn" onclick="changeFontSize(-1)">가-</button>
+        <span class="font-size-label" id="font-size-label">18px</span>
+        <button class="font-btn" onclick="changeFontSize(1)">가+</button>
+      </div>
+    </div>
+    <div class="reading-body empty" id="reading-body">위에서 책과 장을 검색하면 본문이 여기 표시돼요.<br>예) "요한복음 1" / "시 23"</div>
+  </div>
+
+</div>
+
+<div class="bottom-bar">
+  <!-- 녹음 확인 바 (녹음 완료 후에만 표시) -->
+  <div class="rec-status-extra">
+    <div class="rec-filename" id="rec-filename" style="display:none"></div>
+    <audio class="rec-player" id="rec-player" controls style="display:none"></audio>
+    <div class="bar-row" id="rec-review-actions" style="display:none">
+      <button class="btn btn-save" id="save-btn" onclick="saveRecording()">💾 저장</button>
+      <button class="btn btn-share" id="share-btn" onclick="shareRecording()" disabled>📤 공유</button>
+      <button class="btn btn-outline" id="rec-reset-btn" onclick="resetRecording()">🗑 초기화</button>
+      <button class="btn btn-outline" id="rec-close-btn" onclick="closeReviewBar()">✕ 종료</button>
+    </div>
+  </div>
+  <div class="bar-row">
+    <button class="btn btn-rec" id="rec-btn" onclick="toggleRecording()">⏺ 녹음</button>
+    <button class="btn btn-pause" id="pause-btn" onclick="togglePause()" disabled>⏸ 일시정지</button>
+  </div>
+  <div class="bar-row">
+    <button class="complete-btn" id="complete-btn" onclick="markComplete()" style="width:100%;padding:11px 0;font-size:13px">현재 본문 녹음/통독 완료</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="auth-modal" onclick="closeModal('auth-modal',event)">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">BIBLE <span style="color:var(--rec)">●Rec</span> 📖Read</span>
+      <button class="modal-close" onclick="closeModalDirect('auth-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="auth-logged-out">
+        <input type="email" class="auth-input" id="auth-email" placeholder="이메일" autocomplete="email">
+        <input type="password" class="auth-input" id="auth-password" placeholder="비밀번호 (6자 이상)" autocomplete="current-password">
+        <div class="auth-btn-row">
+          <button class="brand-save-btn" onclick="doLogin()">로그인</button>
+          <button class="brand-save-btn auth-btn-secondary" onclick="doSignup()">회원가입</button>
+        </div>
+        <div class="auth-hint">1. 이메일/비밀번호 입력후 회원가입하시면 됩니다.<br>2. 다른 기기에서도 같은 이메일/비밀번호로 로그인하면<br>통독 진행 상황이 이어집니다.</div>
+      </div>
+      <div id="auth-logged-in" style="display:none">
+        <div class="cloud-status">
+          <span class="cloud-status-email" id="auth-user-email"></span>
+          <button class="cloud-logout-btn" onclick="doLogout()">로그아웃</button>
+        </div>
+        <div class="auth-hint">녹음/통독 진행상황만 자동으로 저장되고 있어요.</div>
+        <button class="topbar-btn" id="admin-open-btn" style="display:none;margin-top:12px;width:100%" onclick="openAdminModal()">🔐 관리자 화면</button>
+        <div style="text-align:center;margin-top:16px">
+          <span onclick="confirmDeleteAccount()" style="font-size:11px;color:var(--text-dim);text-decoration:underline;cursor:pointer">회원 탈퇴</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="admin-modal" onclick="closeModal('admin-modal',event)">
+  <div class="modal" style="max-height:88vh">
+    <div class="modal-header">
+      <span class="modal-title">🔐 전체 이용자 현황</span>
+      <button class="modal-close" onclick="closeModalDirect('admin-modal')">✕</button>
+    </div>
+    <div class="modal-body" style="text-align:left">
+      <div id="admin-list-body">불러오는 중...</div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="login-nudge-modal" onclick="closeModal('login-nudge-modal',event)">
+  <div class="modal" style="max-width:320px">
+    <div class="modal-body" style="text-align:center;padding:34px 22px 26px">
+      <div style="font-size:36px">☁️</div>
+      <div style="font-size:16px;font-weight:800;color:var(--brand-dark);margin-top:12px;line-height:1.5">회원가입하시면<br>나만의 성경 녹음/통독의<br>모든 과정이 저장됩니다.</div>
+      <button class="brand-save-btn" style="margin-top:20px" onclick="goToLoginFromNudge()">회원가입 / 로그인하기</button>
+      <button class="cloud-logout-btn" style="margin-top:10px;width:100%;padding:8px 0" onclick="closeModalDirect('login-nudge-modal')">나중에 할게요</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="stage-modal" onclick="closeModal('stage-modal',event)">
+  <div class="modal" style="max-width:320px">
+    <div class="modal-body" style="text-align:center;padding:34px 22px 26px">
+      <div style="font-size:42px">🎉</div>
+      <div style="font-size:21px;font-weight:800;color:var(--brand-dark);margin-top:10px" id="stage-modal-title">축 3단계 달성!</div>
+      <div style="font-size:13px;color:var(--text-muted);margin-top:10px" id="stage-modal-sub">123 / 1189장 완료 (10.3%)</div>
+      <button class="brand-save-btn" style="margin-top:22px" onclick="closeModalDirect('stage-modal')">계속하기</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="daily-log-modal" onclick="closeModal('daily-log-modal',event)">
+  <div class="modal" style="max-height:88vh">
+    <div class="modal-header">
+      <span class="modal-title">🗓 날짜별 녹음/통독 기록</span>
+      <button class="modal-close" onclick="closeModalDirect('daily-log-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="logcal-nav">
+        <button onclick="changeLogMonth(-1)">◀</button>
+        <span id="logcal-month-label"></span>
+        <button onclick="changeLogMonth(1)">▶</button>
+      </div>
+      <div class="logcal-grid">
+        <div class="logcal-weekday">일</div><div class="logcal-weekday">월</div><div class="logcal-weekday">화</div>
+        <div class="logcal-weekday">수</div><div class="logcal-weekday">목</div><div class="logcal-weekday">금</div><div class="logcal-weekday">토</div>
+      </div>
+      <div class="logcal-grid" id="logcal-days"></div>
+      <div id="logday-detail" style="margin-top:14px;text-align:left"></div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="progress-modal" onclick="closeModal('progress-modal',event)">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">📖 성경통독 진행 현황</span>
+      <button class="modal-close" onclick="closeModalDirect('progress-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <canvas id="full-mosaic" width="480" height="480" style="width:100%;max-width:420px;height:auto;border-radius:10px"></canvas>
+      <div class="progress-count" id="progress-count-lg" style="font-size:16px;margin-top:12px"></div>
+      <div class="progress-bar-track" style="max-width:300px;margin:8px auto 0"><div class="progress-bar-fill" id="progress-bar-fill-lg" style="width:0%"></div></div>
+      <div class="progress-count" id="progress-dates" style="font-size:12.5px;margin-top:8px;display:none"></div>
+      <div style="font-size:12px;color:var(--text-muted);margin-top:10px">성경 1장을 녹음/통독 완료할 때마다 그림이 조금씩 그려져서 성경 전체 1189장을 모두 읽으면 그림이 완성됩니다.</div>
+      <button class="topbar-btn" style="margin-top:14px" onclick="openChapterChecklist()">성경별 녹음/통독 현황</button>
+      <button class="topbar-btn" style="margin-top:8px" onclick="openHistoryModal()" id="history-count-btn">나의 성경 녹음/통독: 0회</button>
+      <button class="topbar-btn" style="margin-top:8px" onclick="confirmReset()">초기화</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="history-modal" onclick="closeModal('history-modal',event)">
+  <div class="modal" style="max-height:88vh">
+    <div class="modal-header">
+      <span class="modal-title">📜 나의 성경 녹음/통독 횟수</span>
+      <button class="modal-close" onclick="closeModalDirect('history-modal')">✕</button>
+    </div>
+    <div class="modal-body" style="text-align:left">
+      <div id="history-list-body">기록이 없어요.</div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="checklist-modal" onclick="closeModal('checklist-modal',event)">
+  <div class="modal" style="max-height:88vh">
+    <div class="modal-header">
+      <span class="modal-title">📚 성경 통독 체크리스트</span>
+      <button class="modal-close" onclick="closeModalDirect('checklist-modal')">✕</button>
+    </div>
+    <div class="modal-body" style="text-align:left">
+      <div id="checklist-body">불러오는 중...</div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="certificate-modal" onclick="closeModal('certificate-modal',event)">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">🎉 1독 완료 기념</span>
+      <button class="modal-close" onclick="closeModalDirect('certificate-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <canvas id="cert-canvas" width="1080" height="1456" style="width:100%;max-width:400px;height:auto;border-radius:10px;background:#fff"></canvas>
+      <button class="btn btn-save" style="margin-top:14px;width:100%" onclick="saveCertificateImage()">💾 이미지 저장</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── 날짜 ──
+function todayStr(){
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+(function initCalBadge(){
+  const d = new Date();
+  const WD = ['일','월','화','수','목','금','토'];
+  document.getElementById('cal-month-label').textContent = `${d.getMonth()+1}월`;
+  document.getElementById('cal-day-num').textContent = d.getDate();
+  document.getElementById('cal-weekday-label').textContent = `${WD[d.getDay()]}요일`;
+})();
+
+function showToast(msg, duration){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._hideTimer);t._hideTimer=setTimeout(()=>t.classList.remove('show'),duration||2500);}
+
+// ── 책 이름 약어 매핑 (검색용 + 파일명용) ──
+const BOOK_ABBR = {
+  '창':'창세기','출':'출애굽기','레':'레위기','민':'민수기','신':'신명기',
+  '수':'여호수아','삿':'사사기','룻':'룻기','삼상':'사무엘상','삼하':'사무엘하',
+  '왕상':'열왕기상','왕하':'열왕기하','대상':'역대상','대하':'역대하',
+  '스':'에스라','느':'느헤미야','에':'에스더','욥':'욥기','시':'시편',
+  '잠':'잠언','전':'전도서','아':'아가','사':'이사야','렘':'예레미야',
+  '애':'예레미야애가','겔':'에스겔','단':'다니엘','호':'호세아','욜':'요엘',
+  '암':'아모스','옵':'오바댜','욘':'요나','미':'미가','나':'나훔',
+  '합':'하박국','습':'스바냐','학':'학개','슥':'스가랴','말':'말라기',
+  '마':'마태복음','막':'마가복음','눅':'누가복음','요':'요한복음','행':'사도행전',
+  '롬':'로마서','고전':'고린도전서','고후':'고린도후서','갈':'갈라디아서',
+  '엡':'에베소서','빌':'빌립보서','골':'골로새서','살전':'데살로니가전서','살후':'데살로니가후서',
+  '딤전':'디모데전서','딤후':'디모데후서','딛':'디도서','몬':'빌레몬서',
+  '히':'히브리서','약':'야고보서','벧전':'베드로전서','벧후':'베드로후서',
+  '요일':'요한일서','요이':'요한이서','요삼':'요한삼서','유':'유다서','계':'요한계시록'
+};
+const FULL_TO_ABBR = {};
+Object.keys(BOOK_ABBR).forEach(abbr=>{ FULL_TO_ABBR[BOOK_ABBR[abbr]] = abbr; });
+
+// "마태복음 1" / "마 1" / "마1장" / "마 1:5" → 책+장만 추출 (절은 무시, 항상 장 전체)
+function parseChapterRef(q){
+  q = q.trim().replace('：',':');
+  const m = q.match(/^([가-힣]+)\s*(\d+)/);
+  if(!m) return null;
+  let book = m[1];
+  if(BOOK_ABBR[book]) book = BOOK_ABBR[book];
+  return { book, chapter: m[2] };
+}
+
+let currentChapterVerses = [];
+let currentBookAbbr = '';
+let currentChapterNum = '';
+let currentBookFull = '';
+
+function toggleSearchBar(){
+  const body = document.getElementById('bible-search-body');
+  const chevron = document.getElementById('search-toggle-chevron');
+  const hidden = body.style.display === 'none';
+  body.style.display = hidden ? '' : 'none';
+  chevron.textContent = hidden ? '▾ 숨기기' : '▸ 보이기';
+}
+
+function loadChapter(){
+  const query = document.getElementById('bible-query').value.trim();
+  const version = document.getElementById('bible-version').value;
+  if(!query){ showToast('책과 장을 입력해주세요 (예: 마태복음 1)'); return; }
+  if(!window.BIBLE_DATA){ showToast('성경 데이터 로딩 중... 잠시 후 다시 시도해주세요'); return; }
+
+  const parsed = parseChapterRef(query);
+  if(!parsed){ showToast('예) 마태복음 1 / 마 1 / 시편 23'); return; }
+
+  const books = window.BIBLE_DATA.books;
+  const vData = window.BIBLE_DATA[version];
+  const bookIdx = books.indexOf(parsed.book);
+  if(bookIdx < 0){ showToast('책 이름을 찾을 수 없어요'); return; }
+  const bookNo = String(bookIdx + 1);
+  const chap = vData[bookNo] && vData[bookNo][parsed.chapter];
+  if(!chap){ showToast('해당 장을 찾을 수 없어요'); return; }
+
+  const verseNums = Object.keys(chap).map(Number).sort((a,b)=>a-b);
+  currentChapterVerses = verseNums.map(n=>({num:n, text:chap[String(n)]}));
+  currentBookAbbr = FULL_TO_ABBR[parsed.book] || parsed.book;
+  currentChapterNum = parsed.chapter;
+  currentBookFull = parsed.book;
+
+  renderChapter(parsed.book, parsed.chapter, version);
+  showToast(`✓ ${parsed.book} ${parsed.chapter}장을 불러왔어요`);
+  updateCompleteButtonState();
+}
+
+function renderChapter(bookFull, chapter, version){
+  const verLabel = version === 'EASY' ? '쉬운성경' : '개역개정';
+  document.getElementById('reading-ref').textContent = `${bookFull} ${chapter}장 (${verLabel})`;
+  const body = document.getElementById('reading-body');
+  body.classList.remove('empty');
+  body.innerHTML = currentChapterVerses.map(v=>
+    `<div class="rv-line"><span class="rv-num">${v.num}</span><span class="rv-text">${escapeHtml(v.text)}</span></div>`
+  ).join('');
+}
+
+function escapeHtml(s){
+  return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── 글씨 크기 조절 ──
+let fontSize = parseInt(localStorage.getItem('rb-font-size')) || 18;
+function applyFontSize(){
+  document.documentElement.style.setProperty('--reading-size', fontSize+'px');
+  document.getElementById('font-size-label').textContent = fontSize+'px';
+}
+function changeFontSize(dir){
+  fontSize = Math.max(13, Math.min(32, fontSize + dir*2));
+  localStorage.setItem('rb-font-size', fontSize);
+  applyFontSize();
+}
+applyFontSize();
+
+// ── 녹음 ──
+let mediaRecorder = null;
+let audioChunks = [];
+let recordedBlob = null;
+let recordingSaved = false;
+let recordedMimeType = '';
+let recordedExt = 'webm';
+let stream = null;
+let isRecording = false;
+let isPaused = false;
+let timerInterval = null;
+let elapsedSec = 0;
+
+const MIME_CANDIDATES = [
+  {mime:'audio/mp4', ext:'m4a'},
+  {mime:'audio/webm;codecs=opus', ext:'webm'},
+  {mime:'audio/webm', ext:'webm'},
+  {mime:'audio/ogg;codecs=opus', ext:'ogg'}
+];
+
+function pickMimeType(){
+  for(const c of MIME_CANDIDATES){
+    if(window.MediaRecorder && MediaRecorder.isTypeSupported(c.mime)) return c;
+  }
+  return {mime:'', ext:'webm'};
+}
+
+function formatTimer(sec){
+  const m = String(Math.floor(sec/60)).padStart(2,'0');
+  const s = String(sec%60).padStart(2,'0');
+  return `${m}:${s}`;
+}
+
+async function toggleRecording(){
+  if(isRecording){
+    stopRecording();
+  } else {
+    await startRecording();
+  }
+}
+
+async function startRecording(){
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+    showToast('이 브라우저는 녹음을 지원하지 않아요');
+    return;
+  }
+  try{
+    stream = await navigator.mediaDevices.getUserMedia({audio:true});
+  }catch(e){
+    showToast('마이크 권한이 필요해요. 브라우저 설정에서 허용해주세요');
+    return;
+  }
+
+  const picked = pickMimeType();
+  recordedMimeType = picked.mime;
+  recordedExt = picked.ext;
+  audioChunks = [];
+  recordedBlob = null;
+  recordingSaved = false;
+
+  try{
+    mediaRecorder = picked.mime ? new MediaRecorder(stream, {mimeType:picked.mime}) : new MediaRecorder(stream);
+  }catch(e){
+    mediaRecorder = new MediaRecorder(stream);
+    recordedExt = 'webm';
+  }
+
+  mediaRecorder.ondataavailable = (e)=>{ if(e.data && e.data.size>0) audioChunks.push(e.data); };
+  mediaRecorder.onstop = ()=>{
+    recordedBlob = new Blob(audioChunks, {type: recordedMimeType || 'audio/webm'});
+    const player = document.getElementById('rec-player');
+    player.src = URL.createObjectURL(recordedBlob);
+    player.style.display = 'block';
+    document.getElementById('rec-review-actions').style.display = 'flex';
+    document.getElementById('rec-reset-btn').disabled = false;
+    document.getElementById('rec-label').textContent = '녹음 완료 — 다시 듣고 저장하세요';
+    stream.getTracks().forEach(t=>t.stop());
+  };
+
+  mediaRecorder.start();
+  isRecording = true;
+  isPaused = false;
+  elapsedSec = 0;
+  document.getElementById('rec-dot').classList.remove('hidden');
+  document.getElementById('rec-timer').classList.add('live');
+  document.getElementById('rec-timer').textContent = formatTimer(0);
+  document.getElementById('rec-label').textContent = '녹음 중...';
+  document.getElementById('rec-filename').style.display = 'none';
+  document.getElementById('rec-player').style.display = 'none';
+  document.getElementById('rec-review-actions').style.display = 'none';
+  document.getElementById('share-btn').disabled = true;
+  const btn = document.getElementById('rec-btn');
+  btn.textContent = '⏹ 정지';
+  btn.classList.add('recording');
+  const pauseBtn = document.getElementById('pause-btn');
+  pauseBtn.disabled = false;
+  pauseBtn.textContent = '⏸ 일시정지';
+  pauseBtn.classList.remove('paused');
+
+  startTimer();
+}
+
+function startTimer(){
+  clearInterval(timerInterval);
+  timerInterval = setInterval(()=>{
+    elapsedSec++;
+    document.getElementById('rec-timer').textContent = formatTimer(elapsedSec);
+  }, 1000);
+}
+
+function togglePause(){
+  if(!mediaRecorder || !isRecording) return;
+  if(!isPaused){
+    if(mediaRecorder.state !== 'recording') return;
+    try{ mediaRecorder.pause(); }catch(e){ showToast('이 브라우저는 일시정지를 지원하지 않아요'); return; }
+    isPaused = true;
+    clearInterval(timerInterval);
+    document.getElementById('rec-dot').classList.add('hidden');
+    document.getElementById('rec-timer').classList.remove('live');
+    document.getElementById('rec-label').textContent = '일시정지됨';
+    const pauseBtn = document.getElementById('pause-btn');
+    pauseBtn.textContent = '▶ 재개';
+    pauseBtn.classList.add('paused');
+  } else {
+    if(mediaRecorder.state !== 'paused') return;
+    try{ mediaRecorder.resume(); }catch(e){ showToast('재개할 수 없어요'); return; }
+    isPaused = false;
+    document.getElementById('rec-dot').classList.remove('hidden');
+    document.getElementById('rec-timer').classList.add('live');
+    document.getElementById('rec-label').textContent = '녹음 중...';
+    const pauseBtn = document.getElementById('pause-btn');
+    pauseBtn.textContent = '⏸ 일시정지';
+    pauseBtn.classList.remove('paused');
+    startTimer();
+  }
+}
+
+function stopRecording(){
+  if(mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
+  isRecording = false;
+  isPaused = false;
+  clearInterval(timerInterval);
+  document.getElementById('rec-dot').classList.add('hidden');
+  document.getElementById('rec-timer').classList.remove('live');
+  const btn = document.getElementById('rec-btn');
+  btn.textContent = '⏺ 녹음';
+  btn.classList.remove('recording');
+  const pauseBtn = document.getElementById('pause-btn');
+  pauseBtn.disabled = true;
+  pauseBtn.textContent = '⏸ 일시정지';
+  pauseBtn.classList.remove('paused');
+}
+
+// ── 파일명 생성 & 저장 ──
+function baseFilenameFor(){
+  const dateCompact = todayStr().replace(/-/g,'');
+  const bookPart = currentBookAbbr || '성경';
+  const chapPart = currentChapterNum || '1';
+  return `${bookPart}${chapPart}장_${dateCompact}`;
+}
+
+function buildFilename(){
+  const base = baseFilenameFor();
+  const used = JSON.parse(localStorage.getItem('rb-saved-filenames')||'[]');
+  let finalName = base;
+  let i = 2;
+  while(used.includes(finalName)){
+    finalName = `${base}_${i}`;
+    i++;
+  }
+  return finalName;
+}
+
+function cleanMimeType(mime){
+  // MediaRecorder가 주는 'audio/webm;codecs=opus' 같은 코덱 파라미터는
+  // 공유/저장용 File의 type으로 쓰면 일부 브라우저에서 공유가 실패해서 기본 타입만 사용
+  return (mime || 'audio/webm').split(';')[0];
+}
+
+function isNativeApp(){
+  return !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+}
+
+function blobToBase64(blob){
+  return new Promise((resolve, reject)=>{
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(String(reader.result).split(',')[1]);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
+async function shareBlobNative(blob, filename){
+  const { Filesystem, Share } = window.Capacitor.Plugins;
+  const base64 = await blobToBase64(blob);
+  const writeResult = await Filesystem.writeFile({
+    path: filename,
+    data: base64,
+    directory: 'CACHE'
+  });
+  await Share.share({
+    title: filename,
+    url: writeResult.uri,
+    dialogTitle: '공유하기'
+  });
+}
+
+async function shareRecording(){
+  if(!recordedBlob){ showToast('먼저 녹음을 완료해주세요'); return; }
+  const filename = `${baseFilenameFor()}.${recordedExt}`;
+
+  // 앱(Capacitor)으로 실행 중이면 안드로이드 FileProvider 기반 네이티브 공유 사용 — 가장 안정적
+  if(isNativeApp()){
+    try{
+      await shareBlobNative(recordedBlob, filename);
+      return;
+    }catch(err){
+      if(err && (err.message||'').includes('cancel')) return; // 사용자가 공유창을 취소함
+      console.warn('네이티브 공유 실패', err);
+      showToast('공유에 실패했어요');
+      return;
+    }
+  }
+
+  // 일반 브라우저에서는 Web Share API 시도
+  if(navigator.share){
+    const file = new File([recordedBlob], filename, {type: cleanMimeType(recordedMimeType)});
+    const canShareFiles = !navigator.canShare || navigator.canShare({files:[file]});
+    if(canShareFiles){
+      try{
+        // 파일과 title/text를 같이 보내면 일부 안드로이드 크롬에서 permission denied가 나서
+        // files만 단독으로 공유 (메신저 선택창을 띄우는 데 필요한 최소 정보만 전달)
+        await navigator.share({files:[file]});
+        return;
+      }catch(err){
+        if(err && err.name === 'AbortError') return; // 사용자가 공유창을 취소함
+        console.warn('공유 실패', err);
+      }
+    }
+  }
+
+  // 저장 버튼을 눌러야만 공유가 활성화되므로 파일은 이미 다운로드되어 있음 — 안내만 표시
+  showToast(`✓ 화면 위쪽 '다운로드 완료' 알림을 눌러 바로 공유해 보내보세요`, 5000);
+}
+
+const isIOS = /iP(hone|od|ad)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+function resetRecording(){
+  if(!confirm('현재 녹음을 지울까요? 저장하지 않으면 복구할 수 없어요.')) return;
+  recordedBlob = null;
+  audioChunks = [];
+  recordingSaved = false;
+  const player = document.getElementById('rec-player');
+  player.pause();
+  player.removeAttribute('src');
+  player.style.display = 'none';
+  document.getElementById('rec-review-actions').style.display = 'none';
+  document.getElementById('rec-filename').style.display = 'none';
+  document.getElementById('rec-timer').textContent = '00:00';
+  document.getElementById('rec-label').textContent = '녹음 대기 중';
+  document.getElementById('share-btn').disabled = true;
+  elapsedSec = 0;
+  showToast('녹음이 초기화됐어요');
+}
+
+function closeReviewBar(){
+  if(recordingSaved){
+    // 이미 저장했으니 확인 없이 바로 초기화하고 다음 장을 준비해요
+    recordedBlob = null;
+    audioChunks = [];
+    recordingSaved = false;
+    const player = document.getElementById('rec-player');
+    player.pause();
+    player.removeAttribute('src');
+    player.style.display = 'none';
+    document.getElementById('rec-review-actions').style.display = 'none';
+    document.getElementById('rec-filename').style.display = 'none';
+    document.getElementById('rec-timer').textContent = '00:00';
+    document.getElementById('rec-label').textContent = '녹음 대기 중';
+    document.getElementById('share-btn').disabled = true;
+    elapsedSec = 0;
+    showToast('완료! 녹음/통독 버튼을 누른 후 다음 장을 준비하세요');
+    return;
+  }
+  // 아직 저장 전이면 녹음은 그대로 두고 확인 바만 닫아요
+  document.getElementById('rec-player').style.display = 'none';
+  document.getElementById('rec-review-actions').style.display = 'none';
+  document.getElementById('rec-filename').style.display = 'none';
+  document.getElementById('rec-label').textContent = recordedBlob ? '녹음 완료 (저장 안 됨)' : '녹음 대기 중';
+}
+
+async function saveRecording(){
+  if(!recordedBlob){ showToast('먼저 녹음을 완료해주세요'); return; }
+  const filename = buildFilename();
+  const fullFilename = `${filename}.${recordedExt}`;
+  const file = new File([recordedBlob], fullFilename, {type: cleanMimeType(recordedMimeType)});
+
+  let saved = false;
+
+  // iOS Safari는 <a download>가 blob 파일명을 제대로 반영하지 않는 경우가 많아
+  // 공유 시트(파일 앱에 저장)를 우선 사용해서 원하는 파일명 그대로 저장되게 함
+  if(isIOS && navigator.canShare && navigator.canShare({files:[file]})){
+    try{
+      await navigator.share({files:[file]});
+      saved = true;
+    }catch(err){
+      if(err && err.name === 'AbortError'){
+        return; // 사용자가 공유 시트를 취소함 — 다시 시도하지 않음
+      }
+      saved = false; // 공유 실패 시 아래 다운로드 방식으로 대체
+    }
+  }
+
+  if(!saved){
+    const url = URL.createObjectURL(recordedBlob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fullFilename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(url), 3000);
+  }
+
+  const used = JSON.parse(localStorage.getItem('rb-saved-filenames')||'[]');
+  used.push(filename);
+  localStorage.setItem('rb-saved-filenames', JSON.stringify(used));
+
+  document.getElementById('rec-filename').textContent = `💾 ${fullFilename}`;
+  document.getElementById('rec-filename').style.display = 'block';
+  document.getElementById('rec-reset-btn').disabled = true;
+  document.getElementById('share-btn').disabled = false;
+  recordingSaved = true;
+  showToast(saved ? `✓ ${fullFilename} 저장했어요! (공유 시트 → 파일에 저장)` : `✓ ${fullFilename} 저장(다운로드)됐어요!`);
+}
+
+// ── ☁️ Firebase 이메일 로그인 + 통독 진행 동기화 (큐티노트 앱과 같은 프로젝트 사용) ──
+const firebaseConfig = {
+  apiKey: "AIzaSyB8av0cbCgnGb0yOsMHK7xh55wNTKkQaWI",
+  authDomain: "qt-diary-note.firebaseapp.com",
+  projectId: "qt-diary-note",
+  storageBucket: "qt-diary-note.firebasestorage.app",
+  messagingSenderId: "124937387190",
+  appId: "1:124937387190:web:4a76bf673e40fc280f7a17",
+  measurementId: "G-1LV8N55BBB"
+};
+let fbReady = false, currentUser = null, db = null, auth = null;
+try{
+  firebase.initializeApp(firebaseConfig);
+  auth = firebase.auth();
+  db = firebase.firestore();
+  fbReady = true;
+}catch(e){ console.warn('Firebase 초기화 실패', e); }
+
+const ADMIN_EMAILS = ['worldmission77@gmail.com'];
+function isAdminUser(){
+  return !!(currentUser && currentUser.email && ADMIN_EMAILS.includes(currentUser.email));
+}
+
+function updateCloudBar(){
+  const bar = document.getElementById('cloud-bar');
+  const ico = document.getElementById('cloud-icon');
+  const txt = document.getElementById('cloud-text');
+  const loggedOutBox = document.getElementById('auth-logged-out');
+  const loggedInBox = document.getElementById('auth-logged-in');
+  const adminBtn = document.getElementById('admin-open-btn');
+  if(currentUser){
+    bar.classList.add('logged-in');
+    ico.textContent = '✅';
+    txt.textContent = currentUser.email.split('@')[0];
+    if(loggedOutBox) loggedOutBox.style.display = 'none';
+    if(loggedInBox) loggedInBox.style.display = 'block';
+    const emailEl = document.getElementById('auth-user-email');
+    if(emailEl) emailEl.textContent = currentUser.email;
+    if(adminBtn) adminBtn.style.display = isAdminUser() ? 'block' : 'none';
+  } else {
+    bar.classList.remove('logged-in');
+    ico.textContent = '☁️';
+    txt.textContent = '로그인';
+    if(loggedOutBox) loggedOutBox.style.display = 'block';
+    if(loggedInBox) loggedInBox.style.display = 'none';
+    if(adminBtn) adminBtn.style.display = 'none';
+  }
+}
+
+function authErrorMessage(err){
+  const map = {
+    'auth/invalid-email':'이메일 형식이 올바르지 않아요',
+    'auth/user-not-found':'가입되지 않은 이메일이에요',
+    'auth/wrong-password':'비밀번호가 틀렸어요',
+    'auth/invalid-credential':'이메일 또는 비밀번호가 틀렸어요',
+    'auth/email-already-in-use':'이미 가입된 이메일이에요. 로그인해주세요',
+    'auth/weak-password':'비밀번호는 6자 이상이어야 해요',
+  };
+  return map[err.code] || ('오류: ' + err.message);
+}
+
+async function doLogin(){
+  if(!fbReady){ showToast('⚠️ 클라우드 설정이 아직 안 됐어요'); return; }
+  const email = document.getElementById('auth-email').value.trim();
+  const pw = document.getElementById('auth-password').value;
+  if(!email || !pw){ showToast('이메일과 비밀번호를 입력해주세요'); return; }
+  try{
+    await auth.signInWithEmailAndPassword(email, pw);
+    showToast('✓ 로그인됐어요!');
+    closeModalDirect('auth-modal');
+  }catch(e){ showToast(authErrorMessage(e)); }
+}
+
+async function doSignup(){
+  if(!fbReady){ showToast('⚠️ 클라우드 설정이 아직 안 됐어요'); return; }
+  const email = document.getElementById('auth-email').value.trim();
+  const pw = document.getElementById('auth-password').value;
+  if(!email || !pw){ showToast('이메일과 비밀번호를 입력해주세요'); return; }
+  try{
+    await auth.createUserWithEmailAndPassword(email, pw);
+    showToast('✓ 가입 완료! 자동으로 로그인됐어요');
+    closeModalDirect('auth-modal');
+  }catch(e){ showToast(authErrorMessage(e)); }
+}
+
+async function doLogout(){
+  if(!fbReady) return;
+  await auth.signOut();
+  showToast('로그아웃됐어요');
+  closeModalDirect('auth-modal');
+}
+
+async function confirmDeleteAccount(){
+  if(!fbReady || !currentUser) return;
+  if(!confirm('정말 탈퇴하시겠어요? 모든 기록이 영구 삭제되며 복구할 수 없습니다.')) return;
+  if(!confirm('마지막 확인이에요. 계정과 모든 녹음/통독 기록이 지금 삭제됩니다. 계속할까요?')) return;
+
+  const uid = currentUser.uid;
+  try{
+    try{ await db.collection('users').doc(uid).collection('recordBible').doc('progress').delete(); }catch(e){}
+    try{ await db.collection('recordBibleStats').doc(uid).delete(); }catch(e){}
+
+    await currentUser.delete();
+
+    localStorage.removeItem('rb-completed-chapters');
+    localStorage.removeItem('rb-revealed-cells');
+    localStorage.removeItem('rb-start-date');
+    localStorage.removeItem('rb-end-date');
+    localStorage.removeItem('rb-completion-log');
+    localStorage.removeItem('rb-completion-history');
+    localStorage.removeItem('rb-saved-filenames');
+
+    closeModalDirect('auth-modal');
+    updateProgressUI();
+    updateCompleteButtonState();
+    showToast('탈퇴가 완료됐어요. 그동안 함께해주셔서 감사합니다.');
+  }catch(e){
+    if(e && e.code === 'auth/requires-recent-login'){
+      showToast('보안을 위해 다시 로그인한 후 탈퇴를 진행해주세요');
+      await auth.signOut();
+      closeModalDirect('auth-modal');
+    } else {
+      console.warn('탈퇴 실패', e);
+      showToast('탈퇴 처리 중 오류가 발생했어요. 다시 시도해주세요');
+    }
+  }
+}
+
+function mergeProgressData(local, cloud){
+  const completed = new Set([...(local.completedChapters||[]), ...(cloud.completedChapters||[])]);
+  const revealed = new Set([...(local.revealedCells||[]), ...(cloud.revealedCells||[])]);
+  let startDate = local.startDate || cloud.startDate || null;
+  if(local.startDate && cloud.startDate) startDate = local.startDate < cloud.startDate ? local.startDate : cloud.startDate;
+  let endDate = local.endDate || cloud.endDate || null;
+  if(local.endDate && cloud.endDate) endDate = local.endDate > cloud.endDate ? local.endDate : cloud.endDate;
+
+  const historyMap = new Map();
+  [...(local.history||[]), ...(cloud.history||[])].forEach(h=>{
+    historyMap.set(`${h.start}|${h.end}|${h.completedAt}`, h);
+  });
+  const history = Array.from(historyMap.values()).sort((a,b)=> (a.completedAt||'').localeCompare(b.completedAt||''));
+
+  const logMap = new Map();
+  [...(local.completionLog||[]), ...(cloud.completionLog||[])].forEach(e=>{
+    logMap.set(e.key + '|' + e.date, e);
+  });
+  const completionLog = Array.from(logMap.values()).sort((a,b)=> (a.date||'').localeCompare(b.date||''));
+
+  return { completedChapters:[...completed], revealedCells:[...revealed], startDate, endDate, history, completionLog };
+}
+
+async function loadProgressFromCloud(){
+  if(!fbReady || !currentUser) return;
+  try{
+    const ref = db.collection('users').doc(currentUser.uid).collection('recordBible').doc('progress');
+    const snap = await ref.get();
+    const cloud = snap.exists ? snap.data() : {};
+    const local = {
+      completedChapters: JSON.parse(localStorage.getItem('rb-completed-chapters')||'[]'),
+      revealedCells: JSON.parse(localStorage.getItem('rb-revealed-cells')||'[]'),
+      startDate: localStorage.getItem('rb-start-date'),
+      endDate: localStorage.getItem('rb-end-date'),
+      history: getHistory(),
+      completionLog: getCompletionLog()
+    };
+    const merged = mergeProgressData(local, cloud);
+    localStorage.setItem('rb-completed-chapters', JSON.stringify(merged.completedChapters));
+    localStorage.setItem('rb-revealed-cells', JSON.stringify(merged.revealedCells));
+    if(merged.startDate) localStorage.setItem('rb-start-date', merged.startDate); else localStorage.removeItem('rb-start-date');
+    if(merged.endDate) localStorage.setItem('rb-end-date', merged.endDate); else localStorage.removeItem('rb-end-date');
+    saveHistory(merged.history);
+    saveCompletionLog(merged.completionLog);
+    await ref.set({...merged, updatedAt:new Date().toISOString()});
+    updateProgressUI();
+    updateCompleteButtonState();
+  }catch(e){ console.warn('클라우드 진행상황 로드 실패', e); }
+}
+
+async function saveProgressToCloud(){
+  if(!fbReady || !currentUser) return;
+  try{
+    const ref = db.collection('users').doc(currentUser.uid).collection('recordBible').doc('progress');
+    await ref.set({
+      completedChapters: JSON.parse(localStorage.getItem('rb-completed-chapters')||'[]'),
+      revealedCells: JSON.parse(localStorage.getItem('rb-revealed-cells')||'[]'),
+      startDate: localStorage.getItem('rb-start-date') || null,
+      endDate: localStorage.getItem('rb-end-date') || null,
+      history: getHistory(),
+      completionLog: getCompletionLog(),
+      updatedAt: new Date().toISOString()
+    }, {merge:true});
+
+    // 관리자 화면용 요약 정보 (전체 사용자 목록을 빠르게 조회하기 위한 별도 컬렉션)
+    const revealed = getRevealedSet();
+    const target = getMosaicTargetSet();
+    await db.collection('recordBibleStats').doc(currentUser.uid).set({
+      email: currentUser.email,
+      historyCount: getHistory().length,
+      currentProgress: revealed.size,
+      currentTotal: target.size,
+      updatedAt: new Date().toISOString()
+    }, {merge:true});
+  }catch(e){ console.warn('클라우드 저장 실패', e); }
+}
+
+if(fbReady){
+  let authInitialCheckDone = false;
+  auth.onAuthStateChanged(user=>{
+    currentUser = user;
+    updateCloudBar();
+    if(user) loadProgressFromCloud();
+    if(!authInitialCheckDone){
+      authInitialCheckDone = true;
+      if(!user){
+        setTimeout(()=>showLoginNudge(), 900);
+      }
+    }
+  });
+}
+
+// ── 통독 진행(모자이크) ──
+function chapterKey(bookFull, chapterNum){ return bookFull + '-' + chapterNum; }
+
+function getCompletedSet(){
+  return new Set(JSON.parse(localStorage.getItem('rb-completed-chapters') || '[]'));
+}
+function saveCompletedSet(set){
+  localStorage.setItem('rb-completed-chapters', JSON.stringify(Array.from(set)));
+}
+function getRevealedSet(){
+  return new Set(JSON.parse(localStorage.getItem('rb-revealed-cells') || '[]'));
+}
+function saveRevealedSet(set){
+  localStorage.setItem('rb-revealed-cells', JSON.stringify(Array.from(set)));
+}
+
+let mosaicTargetSet = null;
+function getMosaicTargetSet(){
+  if(!mosaicTargetSet){
+    mosaicTargetSet = new Set((window.MOSAIC_CELLS && window.MOSAIC_CELLS.cells) || []);
+  }
+  return mosaicTargetSet;
+}
+
+function renderMosaic(canvas, revealedSet){
+  if(!canvas || !window.MOSAIC_CELLS) return;
+  const GRID = window.MOSAIC_CELLS.grid;
+  const size = canvas.width;
+  const cell = size / GRID;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0,0,size,size);
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0,0,size,size);
+  const target = getMosaicTargetSet();
+  ctx.fillStyle = '#2b2626';
+  for(let r=0;r<GRID;r++){
+    for(let c=0;c<GRID;c++){
+      const idx = r*GRID+c;
+      if(!target.has(idx) || !revealedSet.has(idx)) continue;
+      ctx.fillRect(c*cell, r*cell, cell+0.6, cell+0.6);
+    }
+  }
+}
+
+function updateProgressUI(){
+  const revealed = getRevealedSet();
+  const total = (window.MOSAIC_CELLS && window.MOSAIC_CELLS.cells.length) || 1189;
+  const n = revealed.size;
+  const pct = Math.round((n/total)*1000)/10;
+
+  // 마침 날짜는 100% 완료일 때만 유효 — 진행 중인데 남아있으면(과거 데이터 등) 정리
+  if(n < total && localStorage.getItem('rb-end-date')){
+    localStorage.removeItem('rb-end-date');
+  }
+
+  document.getElementById('progress-count').textContent = `${n} / ${total} 장 완료 · ${Math.floor(n/41)}/29단계`;
+  document.getElementById('progress-bar-fill').style.width = pct+'%';
+  renderMosaic(document.getElementById('mini-mosaic'), revealed);
+
+  const lg = document.getElementById('progress-count-lg');
+  if(lg) lg.textContent = `${n} / ${total} 장 완료 (${pct}%) · ${Math.floor(n/41)}/29단계`;
+  const fillLg = document.getElementById('progress-bar-fill-lg');
+  if(fillLg) fillLg.style.width = pct+'%';
+  renderMosaic(document.getElementById('full-mosaic'), revealed);
+
+  const datesEl = document.getElementById('progress-dates');
+  if(datesEl){
+    const startDate = localStorage.getItem('rb-start-date');
+    const endDate = localStorage.getItem('rb-end-date');
+    if(startDate){
+      datesEl.textContent = endDate ? `📅 시작 ${startDate}  →  마침 ${endDate}` : `📅 시작 ${startDate}  →  진행중`;
+      datesEl.style.display = 'block';
+    } else {
+      datesEl.style.display = 'none';
+    }
+  }
+  updateHistoryButtonLabel();
+}
+
+function updateCompleteButtonState(){
+  const btn = document.getElementById('complete-btn');
+  if(!btn) return;
+  if(!currentBookFull || !currentChapterNum){
+    btn.textContent = '현재 본문 녹음/통독 완료';
+    btn.classList.remove('done');
+    return;
+  }
+  const completed = getCompletedSet();
+  const done = completed.has(chapterKey(currentBookFull, currentChapterNum));
+  btn.textContent = done ? '✅ 완료됨' : '현재 본문 녹음/통독 완료';
+  btn.classList.toggle('done', done);
+}
+
+function markComplete(){
+  if(!currentBookFull || !currentChapterNum){
+    showToast('먼저 위에서 본문을 불러와주세요');
+    return;
+  }
+  const key = chapterKey(currentBookFull, currentChapterNum);
+  const completed = getCompletedSet();
+  if(completed.has(key)){
+    showToast('이미 완료 표시한 장이에요 ✅');
+    return;
+  }
+
+  const revealed = getRevealedSet();
+  const target = getMosaicTargetSet();
+  const remaining = Array.from(target).filter(idx => !revealed.has(idx));
+
+  completed.add(key);
+  saveCompletedSet(completed);
+
+  const log = getCompletionLog();
+  log.push({ key, book: currentBookFull, chapter: currentChapterNum, date: todayStr() });
+  saveCompletionLog(log);
+
+  if(!localStorage.getItem('rb-start-date')){
+    localStorage.setItem('rb-start-date', todayStr());
+  }
+
+  if(remaining.length > 0){
+    const pick = remaining[Math.floor(Math.random()*remaining.length)];
+    revealed.add(pick);
+    saveRevealedSet(revealed);
+  }
+
+  let justCompleted = false;
+  if(revealed.size >= target.size && !localStorage.getItem('rb-end-date')){
+    localStorage.setItem('rb-end-date', todayStr());
+    justCompleted = true;
+  }
+
+  updateProgressUI();
+  updateCompleteButtonState();
+  saveProgressToCloud();
+
+  if(justCompleted){
+    archiveCompletion();
+  } else if(revealed.size % 41 === 0 && revealed.size < target.size){
+    const stageNum = revealed.size / 41;
+    if(stageNum === 1 && !currentUser){
+      showLoginNudge();
+    } else {
+      showStageModal(stageNum, revealed.size, target.size);
+    }
+  } else if(revealed.size < target.size){
+    showToast(`🎉 ${parsed_currentRef()} 완료! (${revealed.size} / ${target.size})`);
+  }
+}
+
+function showLoginNudge(){
+  openModal('login-nudge-modal');
+}
+
+function goToLoginFromNudge(){
+  closeModalDirect('login-nudge-modal');
+  openModal('auth-modal');
+}
+
+function showStageModal(stageNum, revealedCount, total){
+  const pct = Math.round((revealedCount/total)*1000)/10;
+  document.getElementById('stage-modal-title').textContent = `축 ${stageNum}단계 달성!`;
+  document.getElementById('stage-modal-sub').textContent = `${revealedCount} / ${total}장 완료 (${pct}%)`;
+  openModal('stage-modal');
+}
+
+async function archiveCompletion(){
+  const start = localStorage.getItem('rb-start-date');
+  const end = localStorage.getItem('rb-end-date') || todayStr();
+  const history = getHistory();
+  history.push({ start, end, completedAt: todayStr() });
+  saveHistory(history);
+  saveProgressToCloud();
+  updateHistoryButtonLabel();
+
+  openModal('certificate-modal');
+  await renderCertificateCanvas(document.getElementById('cert-canvas'), start, end, history.length);
+  showToast(`🎊 성경 전체 1189장을 다 통독하셨어요! ${history.length}독째예요!`);
+}
+
+function parsed_currentRef(){
+  return `${currentBookFull} ${currentChapterNum}장`;
+}
+
+function getCompletionLog(){
+  return JSON.parse(localStorage.getItem('rb-completion-log') || '[]');
+}
+function saveCompletionLog(log){
+  localStorage.setItem('rb-completion-log', JSON.stringify(log));
+}
+
+let logCalMonth = null;
+let logCalSelectedDate = null;
+
+function openDailyLogModal(){
+  logCalMonth = new Date();
+  logCalMonth.setDate(1);
+  logCalSelectedDate = todayStr();
+  renderLogCalendar();
+  openModal('daily-log-modal');
+}
+
+function changeLogMonth(delta){
+  logCalMonth.setMonth(logCalMonth.getMonth() + delta);
+  renderLogCalendar();
+}
+
+function renderLogCalendar(){
+  const y = logCalMonth.getFullYear();
+  const m = logCalMonth.getMonth();
+  document.getElementById('logcal-month-label').textContent = `${y}년 ${m+1}월`;
+
+  const log = getCompletionLog();
+  const countByDate = {};
+  log.forEach(e => { countByDate[e.date] = (countByDate[e.date]||0) + 1; });
+
+  const firstDow = new Date(y, m, 1).getDay();
+  const daysInMonth = new Date(y, m+1, 0).getDate();
+  const todayKey = todayStr();
+
+  let html = '';
+  for(let i=0; i<firstDow; i++) html += `<div class="logcal-cell empty"></div>`;
+  for(let day=1; day<=daysInMonth; day++){
+    const d = new Date(y, m, day);
+    const ds = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    const isToday = ds === todayKey;
+    const isSelected = ds === logCalSelectedDate;
+    const hasLog = !!countByDate[ds];
+    const cls = ['logcal-cell'];
+    if(isToday) cls.push('today');
+    if(hasLog) cls.push('has-log');
+    if(isSelected) cls.push('selected');
+    html += `<div class="${cls.join(' ')}" onclick="showLogDayDetail('${ds}')">${day}${hasLog?'<span class="logcal-dot"></span>':''}</div>`;
+  }
+  document.getElementById('logcal-days').innerHTML = html;
+  showLogDayDetail(logCalSelectedDate);
+}
+
+function showLogDayDetail(dateStr){
+  logCalSelectedDate = dateStr;
+  document.querySelectorAll('.logcal-cell').forEach(cell=>{
+    const day = parseInt(cell.textContent);
+    if(!day || cell.classList.contains('empty')) return;
+    const y = logCalMonth.getFullYear(), m = logCalMonth.getMonth();
+    const ds = `${y}-${String(m+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    cell.classList.toggle('selected', ds === dateStr);
+  });
+
+  const log = getCompletionLog().filter(e => e.date === dateStr);
+  const detail = document.getElementById('logday-detail');
+  const [yy,mm,dd] = dateStr.split('-').map(Number);
+  const label = `${yy}.${mm}.${dd}`;
+
+  if(!log.length){
+    detail.innerHTML = `<div style="font-size:12.5px;color:var(--text-muted);text-align:center;padding:14px 0">${label} — 녹음/통독 기록이 없어요.</div>`;
+    return;
+  }
+  detail.innerHTML = `<div style="font-size:12.5px;font-weight:800;color:var(--brand-dark);margin-bottom:6px">${label} (${log.length}장)</div>` +
+    log.map(e => `<div class="logday-item"><span class="logday-item-icon">📖</span>${escapeHtml(e.book)} ${escapeHtml(e.chapter)}장</div>`).join('');
+}
+
+function getHistory(){
+  return JSON.parse(localStorage.getItem('rb-completion-history') || '[]');
+}
+function saveHistory(history){
+  localStorage.setItem('rb-completion-history', JSON.stringify(history));
+}
+
+function updateHistoryButtonLabel(){
+  const btn = document.getElementById('history-count-btn');
+  if(!btn) return;
+  const n = getHistory().length;
+  btn.textContent = `나의 성경 녹음/통독: ${n}회`;
+}
+
+async function openAdminModal(){
+  if(!isAdminUser()){ showToast('관리자만 볼 수 있어요'); return; }
+  openModal('admin-modal');
+  const body = document.getElementById('admin-list-body');
+  body.innerHTML = '불러오는 중...';
+  try{
+    const snap = await db.collection('recordBibleStats').orderBy('historyCount', 'desc').get();
+    if(snap.empty){
+      body.innerHTML = '<div style="color:var(--text-muted);font-size:13px;text-align:center;padding:20px 0">아직 이용자 데이터가 없어요.</div>';
+      return;
+    }
+    let html = `<div style="font-size:12px;color:var(--text-muted);margin-bottom:10px">총 ${snap.size}명</div>`;
+    snap.forEach(doc=>{
+      const d = doc.data();
+      html += `<div class="admin-item">
+        <span class="admin-email">${escapeHtml(d.email || doc.id)}</span>
+        <span class="admin-count">${d.historyCount || 0}독 · ${d.currentProgress||0}/${d.currentTotal||1189}</span>
+      </div>`;
+    });
+    body.innerHTML = html;
+  }catch(e){
+    console.warn('관리자 데이터 로드 실패', e);
+    body.innerHTML = '<div style="color:var(--text-muted);font-size:13px;text-align:center;padding:20px 0">불러오지 못했어요. Firestore 보안 규칙을 확인해주세요.</div>';
+  }
+}
+
+function openHistoryModal(){
+  renderHistoryList();
+  closeModalDirect('progress-modal');
+  openModal('history-modal');
+}
+
+function renderHistoryList(){
+  const body = document.getElementById('history-list-body');
+  const history = getHistory();
+  if(!history.length){
+    body.innerHTML = '<div style="color:var(--text-muted);font-size:13px;text-align:center;padding:24px 0">아직 완독 기록이 없어요.<br>1189장을 다 채우면<br>여기에 기록이 쌓여요.</div>';
+    return;
+  }
+  body.innerHTML = history.map((h, i) => {
+    const days = daysBetween(h.start, h.end);
+    return `<div class="hist-item" onclick="viewHistoryCertificate(${i})">
+      <div class="hist-num">${i+1}독</div>
+      <div class="hist-info">
+        <div class="hist-dates">${formatDateDots(h.start)} → ${formatDateDots(h.end)}</div>
+        <div class="hist-days">총 ${days}일</div>
+      </div>
+      <div class="hist-arrow">›</div>
+    </div>`;
+  }).join('');
+}
+
+async function viewHistoryCertificate(index){
+  const record = getHistory()[index];
+  if(!record) return;
+  closeModalDirect('history-modal');
+  openModal('certificate-modal');
+  await renderCertificateCanvas(document.getElementById('cert-canvas'), record.start, record.end, index + 1);
+}
+
+function confirmReset(){
+  if(!confirm('지금까지의 성경 녹음/통독 현황 기록이 삭제됩니다. 정말 초기화하시겠습니까?')) return;
+
+  localStorage.removeItem('rb-completed-chapters');
+  localStorage.removeItem('rb-revealed-cells');
+  localStorage.removeItem('rb-start-date');
+  localStorage.removeItem('rb-end-date');
+  updateProgressUI();
+  updateCompleteButtonState();
+  saveProgressToCloud();
+  showToast('진행 상황이 초기화됐어요. 완독 횟수는 그대로 유지돼요.');
+}
+
+function daysBetween(d1, d2){
+  return Math.round((new Date(d2) - new Date(d1)) / 86400000) + 1;
+}
+
+function drawMosaicOnCtx(ctx, offX, offY, size){
+  const GRID = window.MOSAIC_CELLS.grid;
+  const cell = size / GRID;
+  const revealed = getRevealedSet();
+  const target = getMosaicTargetSet();
+  ctx.fillStyle = '#2b2626';
+  for(let r=0;r<GRID;r++){
+    for(let c=0;c<GRID;c++){
+      const idx = r*GRID+c;
+      if(target.has(idx) && revealed.has(idx)){
+        ctx.fillRect(offX+c*cell, offY+r*cell, cell+0.6, cell+0.6);
+      }
+    }
+  }
+}
+
+let certBgImage = null;
+function loadImage(src){
+  return new Promise((resolve, reject)=>{
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = src;
+  });
+}
+
+async function renderCertificateCanvas(canvas, overrideStart, overrideEnd, roundNumber){
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+
+  if(!certBgImage){
+    try{ certBgImage = await loadImage('certificate-bg.jpg'); }
+    catch(e){ console.warn('상장 배경 이미지를 불러오지 못했어요', e); }
+  }
+  if(certBgImage){
+    ctx.drawImage(certBgImage, 0, 0, W, H);
+  } else {
+    ctx.fillStyle = '#fbf4ec';
+    ctx.fillRect(0, 0, W, H);
+  }
+
+  const BG = '#fbf4ec';
+  const n = roundNumber || getHistory().length || 1;
+
+  // 폰트가 준비됐는지 확인 (캔버스는 폰트 로드 전이면 기본 글꼴로 그려버림)
+  try{
+    await Promise.all([
+      document.fonts.load("800 66px 'Nanum Myeongjo'"),
+      document.fonts.load("700 36px 'NanumSquare'"),
+      document.fonts.load("400 26px 'NanumSquare'")
+    ]);
+  }catch(e){}
+
+  // 제목 — "성경 N독을 축하합니다"
+  ctx.fillStyle = BG;
+  ctx.fillRect(110, 185, 880, 108);
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#5c2c2c';
+  ctx.font = "800 66px 'Nanum Myeongjo', serif";
+  ctx.fillText(`성경 ${n}독을 축하합니다`, W/2, 278);
+
+  // 이름(로그인 아이디) — 밑줄 위 빈 자리에 채워넣기
+  const name = (typeof currentUser !== 'undefined' && currentUser && currentUser.email)
+    ? currentUser.email.split('@')[0] : '';
+  if(name){
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#2b2626';
+    ctx.font = "700 34px 'NanumSquare', sans-serif";
+    ctx.fillText(name, 526, 880);
+  }
+
+  // 안내 문단 교체 (리본 배너는 건드리지 않고, 그 아래 문단 자리에만 정확히 겹쳐씀)
+  ctx.fillStyle = BG;
+  ctx.fillRect(230, 998, 620, 135);
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#2b2626';
+  ctx.font = "400 26px sans-serif";
+  const paraLines = [
+    `위 사람은 하나님의 말씀인 성경을 ${n}독하였으므로`,
+    '이 상장을 수여하여 그 노력을 격려하며',
+    '앞으로도 말씀 안에서 더욱 성장하기를 축복합니다.'
+  ];
+  paraLines.forEach((line, i) => {
+    ctx.fillText(line, W/2, 1037 + i * 39);
+  });
+
+  // 기존 이미지에 있던 샘플 날짜 문구를 배경색으로 지우고 실제 값으로 교체
+  ctx.fillStyle = BG;
+  ctx.fillRect(260, 1172, 560, 62);
+  ctx.fillRect(300, 1218, 480, 54);
+
+  const start = overrideStart || localStorage.getItem('rb-start-date') || '-';
+  const end = overrideEnd || localStorage.getItem('rb-end-date') || todayStr();
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#2b2626';
+  ctx.font = "700 36px 'NanumSquare', sans-serif";
+  ctx.fillText(`${formatDateDots(start)}  →  ${formatDateDots(end)}`, W/2, 1218);
+
+  if(start !== '-'){
+    const days = daysBetween(start, end);
+    drawFooterLogoLine(ctx, `총 ${days}일 동안의 `, ' 여정', W/2, 1258);
+  }
+}
+
+function drawFooterLogoLine(ctx, prefix, suffix, centerX, baselineY){
+  const segments = [
+    { text: prefix, font: "400 24px sans-serif", color: '#8a7c7c' },
+    { text: 'BIBLE', font: "800 24px 'NanumSquare', sans-serif", color: '#5c2c2c' },
+    { text: ' ', font: "400 24px sans-serif", color: '#8a7c7c' },
+    { text: '●', font: "800 15px sans-serif", color: '#d64545' },
+    { text: 'Rec', font: "800 20px 'NanumSquare', sans-serif", color: '#d64545' },
+    { text: ' 📖', font: "400 20px sans-serif", color: '#5c2c2c' },
+    { text: 'Read', font: "800 20px 'NanumSquare', sans-serif", color: '#5c2c2c' },
+    { text: suffix, font: "400 24px sans-serif", color: '#8a7c7c' }
+  ];
+  ctx.textAlign = 'left';
+  const widths = segments.map(s => { ctx.font = s.font; return ctx.measureText(s.text).width; });
+  const totalWidth = widths.reduce((a,b) => a+b, 0);
+  let x = centerX - totalWidth/2;
+  segments.forEach((s, i) => {
+    ctx.font = s.font;
+    ctx.fillStyle = s.color;
+    ctx.fillText(s.text, x, baselineY);
+    x += widths[i];
+  });
+  ctx.textAlign = 'center';
+}
+
+function formatDateDots(dateStr){
+  if(!dateStr || dateStr === '-') return dateStr;
+  const parts = dateStr.split('-').map(p => String(parseInt(p, 10)));
+  if(parts.length !== 3) return dateStr.replace(/-/g, '.');
+  return `${parts[0]}.${parts[1]}.${parts[2]}`;
+}
+
+async function openCertificate(){
+  const revealed = getRevealedSet();
+  const target = getMosaicTargetSet();
+  if(revealed.size < target.size){
+    showToast(`아직 통독이 끝나지 않았어요 (${revealed.size} / ${target.size}장)`);
+    return;
+  }
+  if(!localStorage.getItem('rb-end-date')){
+    localStorage.setItem('rb-end-date', todayStr());
+    updateProgressUI();
+  }
+  closeModalDirect('progress-modal');
+  openModal('certificate-modal');
+  await renderCertificateCanvas(document.getElementById('cert-canvas'));
+}
+
+function saveCertificateImage(){
+  const canvas = document.getElementById('cert-canvas');
+  canvas.toBlob(async (blob)=>{
+    if(!blob){ showToast('이미지 생성에 실패했어요'); return; }
+    const filename = `성경통독_1독완료_${todayStr().replace(/-/g,'')}.png`;
+
+    if(isNativeApp()){
+      try{
+        const base64 = await blobToBase64(blob);
+        const writeResult = await window.Capacitor.Plugins.Filesystem.writeFile({
+          path: filename, data: base64, directory: 'CACHE'
+        });
+        await window.Capacitor.Plugins.Share.share({ title: filename, url: writeResult.uri, dialogTitle: '이미지 공유하기' });
+        showToast('✓ 이미지를 공유했어요!');
+      }catch(err){
+        if(!(err && (err.message||'').includes('cancel'))){
+          console.warn('네이티브 공유 실패', err);
+          showToast('공유에 실패했어요');
+        }
+      }
+      return;
+    }
+
+    const file = new File([blob], filename, {type:'image/png'});
+    let saved = false;
+
+    if(isIOS && navigator.canShare && navigator.canShare({files:[file]})){
+      try{
+        await navigator.share({files:[file]});
+        saved = true;
+      }catch(err){
+        if(err && err.name === 'AbortError') return;
+        saved = false;
+      }
+    }
+
+    if(!saved){
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(()=>URL.revokeObjectURL(url), 3000);
+    }
+    showToast(saved ? '✓ 이미지를 저장했어요! (공유 시트 → 사진/파일에 저장)' : '✓ 이미지가 저장(다운로드)됐어요!');
+  }, 'image/png');
+}
+
+function openProgressModal(){
+  updateProgressUI();
+  openModal('progress-modal');
+}
+
+function openChapterChecklist(){
+  renderChapterChecklist();
+  closeModalDirect('progress-modal');
+  openModal('checklist-modal');
+}
+
+function renderChapterChecklist(){
+  const body = document.getElementById('checklist-body');
+  if(!window.BIBLE_DATA){ body.innerHTML = '성경 데이터 로딩 중이에요. 잠시 후 다시 열어주세요.'; return; }
+
+  const books = window.BIBLE_DATA.books;
+  const vData = window.BIBLE_DATA.GAEGYE;
+  const completed = getCompletedSet();
+
+  let doneTotal = 0, chapterTotal = 0;
+  let html = '';
+
+  for(let i=0; i<books.length; i++){
+    const bookFull = books[i];
+    const bookNo = String(i+1);
+    const chapters = vData[bookNo] ? Object.keys(vData[bookNo]).map(Number).sort((a,b)=>a-b) : [];
+    if(!chapters.length) continue;
+
+    let cellsHtml = '';
+    let bookDone = 0;
+    for(const ch of chapters){
+      const key = chapterKey(bookFull, String(ch));
+      const isDone = completed.has(key);
+      if(isDone){ bookDone++; doneTotal++; }
+      cellsHtml += `<div class="chk-cell${isDone?' done':''}">${ch}</div>`;
+    }
+    chapterTotal += chapters.length;
+
+    html += `<div class="chk-book">
+      <div class="chk-book-name"><span>${escapeHtml(bookFull)}</span><span class="chk-book-count">${bookDone}/${chapters.length}장</span></div>
+      <div class="chk-grid">${cellsHtml}</div>
+    </div>`;
+  }
+
+  body.innerHTML = `<div class="chk-summary">전체 ${doneTotal} / ${chapterTotal}장 완료</div>` + html;
+}
+
+function openModal(id){ document.getElementById(id).classList.add('open'); }
+function closeModal(id,e){ if(e.target===document.getElementById(id)) closeModalDirect(id); }
+function closeModalDirect(id){ document.getElementById(id).classList.remove('open'); }
+
+updateProgressUI();
+updateCompleteButtonState();
+
+// PWA 서비스 워커 등록
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('./sw.js').catch(()=>{});
+}
+</script>
+</body>
+</html>
