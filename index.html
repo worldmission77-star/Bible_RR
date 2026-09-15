@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="Record Bible">
+<meta name="apple-mobile-web-app-title" content="Bible RR">
 <meta name="theme-color" content="#7d3f3f">
 <link rel="manifest" href="manifest.json">
 <title>BIBLE Rec Read 성경 녹음/통독 프로그램</title>
@@ -57,6 +57,8 @@ body::before{
 .cal-weekday{font-size:6.5px;color:var(--text-muted);padding-bottom:2px;font-weight:700;letter-spacing:0.3px}
 
 #cloud-bar{position:absolute;right:12px;top:9px;cursor:pointer;display:flex;align-items:center;gap:4px;font-size:10.5px;padding:4px 11px;border-radius:14px;border:1px solid var(--brand-soft);background:#fff;color:var(--brand-dark);font-family:'NanumSquare','Nanum Gothic',sans-serif;max-width:88px}
+#lang-toggle{position:absolute;right:12px;top:34px;cursor:pointer;font-size:9.5px;font-weight:800;padding:3px 9px;border-radius:12px;border:1px solid var(--brand-soft);background:#fff;color:var(--brand-dark);font-family:'NanumSquare','Nanum Gothic',sans-serif}
+#lang-toggle.active{background:var(--brand);color:#fff;border-color:var(--brand)}
 #cloud-icon{flex-shrink:0}
 #cloud-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 #cloud-bar.logged-in{background:#f3e9d8;border-color:var(--gold)}
@@ -215,10 +217,11 @@ audio.rec-player{width:100%;margin-top:10px}
     <span class="title-rec"><span class="title-rec-dot"></span>Rec</span>
     <span class="title-read">📖Read</span>
   </div>
-  <div class="app-subtitle">성경 녹음/통독 프로그램</div>
+  <div class="app-subtitle" data-i18n="subtitle">성경 녹음/통독 프로그램</div>
   <div id="cloud-bar" onclick="openModal('auth-modal')">
-    <span id="cloud-icon">☁️</span><span id="cloud-text">로그인</span>
+    <span id="cloud-icon">☁️</span><span id="cloud-text" data-i18n="login">로그인</span>
   </div>
+  <div id="lang-toggle" onclick="toggleLanguage()">EN</div>
 </div>
 
 <div class="top-status-row">
@@ -227,12 +230,12 @@ audio.rec-player{width:100%;margin-top:10px}
     <div class="progress-text">
       <div class="progress-count" id="progress-count">0 / 1189 장 완료</div>
       <div class="progress-bar-track"><div class="progress-bar-fill" id="progress-bar-fill" style="width:0%"></div></div>
-      <div class="progress-hint">탭해서 크게 보기</div>
+      <div class="progress-hint" data-i18n="progress_hint">탭해서 크게 보기</div>
     </div>
   </div>
   <div class="rec-timer-box">
     <div><span class="rec-dot hidden" id="rec-dot"></span><span class="rec-timer" id="rec-timer">00:00</span></div>
-    <div class="rec-label" id="rec-label">녹음 대기 중</div>
+    <div class="rec-label" id="rec-label" data-i18n="rec_label_idle">녹음 대기 중</div>
   </div>
 </div>
 
@@ -241,36 +244,36 @@ audio.rec-player{width:100%;margin-top:10px}
   <!-- 성경검색 (1장 단위) -->
   <div class="field-card brand">
     <div class="field-label" onclick="toggleSearchBar()" style="cursor:pointer;justify-content:space-between">
-      <span>📖 성경 본문 (1장씩)</span>
-      <span id="search-toggle-chevron" style="color:var(--text-dim);font-size:11px">▾ 숨기기</span>
+      <span data-i18n="bible_search_label">📖 성경 본문 (1장씩)</span>
+      <span id="search-toggle-chevron" style="color:var(--text-dim);font-size:11px" data-i18n="search_hide">▾ 숨기기</span>
     </div>
     <div id="bible-search-body">
       <div class="field-row">
         <select id="bible-version" class="bible-version-select">
-          <option value="GAEGYE">개역개정</option>
-          <option value="EASY">쉬운성경</option>
-          <option value="SAEBEON">새번역</option>
-          <option value="NIV">NIV</option>
+          <option value="GAEGYE" data-i18n="version_gaegye">개역개정</option>
+          <option value="EASY" data-i18n="version_easy">쉬운성경</option>
+          <option value="SAEBEON" data-i18n="새번역">새번역</option>
+          <option value="NIV" data-i18n="NIV">NIV</option>
         </select>
-        <input class="bible-search-input" id="bible-query" placeholder="예) 마태복음 1 / 마 1"
+        <input class="bible-search-input" id="bible-query" data-i18n-placeholder="query_placeholder" placeholder="예) 마태복음 1 / 마 1"
           onkeydown="if(event.key==='Enter')loadChapter()">
-        <button class="bible-search-btn" onclick="loadChapter()">불러오기</button>
+        <button class="bible-search-btn" onclick="loadChapter()" data-i18n="search_btn">불러오기</button>
       </div>
-      <div class="search-hint">장 전체를 불러와요. 절 번호를 적어도 장만 인식돼요.</div>
+      <div class="search-hint" data-i18n="search_hint">장 전체를 불러와요. 절 번호를 적어도 장만 인식돼요.</div>
     </div>
   </div>
 
   <!-- 본문 -->
   <div class="reading-card">
     <div class="reading-header" style="flex-wrap:wrap;row-gap:6px">
-      <span class="reading-ref" id="reading-ref">본문을 불러와주세요</span>
+      <span class="reading-ref" id="reading-ref" data-i18n="reading_ref_default">본문을 불러와주세요</span>
       <div class="font-ctrl">
         <button class="font-btn" onclick="changeFontSize(-1)">가-</button>
         <span class="font-size-label" id="font-size-label">18px</span>
         <button class="font-btn" onclick="changeFontSize(1)">가+</button>
       </div>
     </div>
-    <div class="reading-body empty" id="reading-body">위에서 책과 장을 검색하면 본문이 여기 표시돼요.<br>예) "요한복음 1" / "시 23"</div>
+    <div class="reading-body empty" id="reading-body" data-i18n="reading_body_empty">위에서 책과 장을 검색하면 본문이 여기 표시돼요.<br>예) "요한복음 1" / "시 23"</div>
   </div>
 
 </div>
@@ -281,18 +284,18 @@ audio.rec-player{width:100%;margin-top:10px}
     <div class="rec-filename" id="rec-filename" style="display:none"></div>
     <audio class="rec-player" id="rec-player" controls style="display:none"></audio>
     <div class="bar-row" id="rec-review-actions" style="display:none">
-      <button class="btn btn-save" id="save-btn" onclick="saveRecording()">💾 저장</button>
-      <button class="btn btn-share" id="share-btn" onclick="shareRecording()" disabled>📤 공유</button>
-      <button class="btn btn-outline" id="rec-reset-btn" onclick="resetRecording()">🗑 초기화</button>
-      <button class="btn btn-outline" id="rec-close-btn" onclick="closeReviewBar()">✕ 종료</button>
+      <button class="btn btn-save" id="save-btn" onclick="saveRecording()" data-i18n="save_btn">💾 저장</button>
+      <button class="btn btn-share" id="share-btn" onclick="shareRecording()" disabled data-i18n="share_btn">📤 공유</button>
+      <button class="btn btn-outline" id="rec-reset-btn" onclick="resetRecording()" data-i18n="reset_btn">🗑 초기화</button>
+      <button class="btn btn-outline" id="rec-close-btn" onclick="closeReviewBar()" data-i18n="close_btn">✕ 종료</button>
     </div>
   </div>
   <div class="bar-row">
-    <button class="btn btn-rec" id="rec-btn" onclick="toggleRecording()">⏺ 녹음</button>
-    <button class="btn btn-pause" id="pause-btn" onclick="togglePause()" disabled>⏸ 일시정지</button>
+    <button class="btn btn-rec" id="rec-btn" onclick="toggleRecording()" data-i18n="rec_btn">⏺ 녹음</button>
+    <button class="btn btn-pause" id="pause-btn" onclick="togglePause()" disabled data-i18n="pause_btn">⏸ 일시정지</button>
   </div>
   <div class="bar-row">
-    <button class="complete-btn" id="complete-btn" onclick="markComplete()" style="width:100%;padding:11px 0;font-size:13px">현재 본문 녹음/통독 완료</button>
+    <button class="complete-btn" id="complete-btn" onclick="markComplete()" style="width:100%;padding:11px 0;font-size:13px" data-i18n="complete_btn">현재 본문 녹음/통독 완료</button>
   </div>
 </div>
 
@@ -304,23 +307,23 @@ audio.rec-player{width:100%;margin-top:10px}
     </div>
     <div class="modal-body">
       <div id="auth-logged-out">
-        <input type="email" class="auth-input" id="auth-email" placeholder="이메일" autocomplete="email">
-        <input type="password" class="auth-input" id="auth-password" placeholder="비밀번호 (6자 이상)" autocomplete="current-password">
+        <input type="email" class="auth-input" id="auth-email" data-i18n-placeholder="auth_email_ph" placeholder="이메일" autocomplete="email">
+        <input type="password" class="auth-input" id="auth-password" data-i18n-placeholder="auth_pw_ph" placeholder="비밀번호 (6자 이상)" autocomplete="current-password">
         <div class="auth-btn-row">
-          <button class="brand-save-btn" onclick="doLogin()">로그인</button>
-          <button class="brand-save-btn auth-btn-secondary" onclick="doSignup()">회원가입</button>
+          <button class="brand-save-btn" onclick="doLogin()" data-i18n="login_btn">로그인</button>
+          <button class="brand-save-btn auth-btn-secondary" onclick="doSignup()" data-i18n="signup_btn">회원가입</button>
         </div>
-        <div class="auth-hint">1. 이메일/비밀번호 입력후 회원가입하시면 됩니다.<br>2. 다른 기기에서도 같은 이메일/비밀번호로 로그인하면<br>통독 진행 상황이 이어집니다.</div>
+        <div class="auth-hint" data-i18n="auth_hint_out">1. 이메일/비밀번호 입력후 회원가입하시면 됩니다.<br>2. 다른 기기에서도 같은 이메일/비밀번호로 로그인하면<br>통독 진행 상황이 이어집니다.</div>
       </div>
       <div id="auth-logged-in" style="display:none">
         <div class="cloud-status">
           <span class="cloud-status-email" id="auth-user-email"></span>
-          <button class="cloud-logout-btn" onclick="doLogout()">로그아웃</button>
+          <button class="cloud-logout-btn" onclick="doLogout()" data-i18n="logout_btn">로그아웃</button>
         </div>
-        <div class="auth-hint">녹음/통독 진행상황만 자동으로 저장되고 있어요.</div>
-        <button class="topbar-btn" id="admin-open-btn" style="display:none;margin-top:12px;width:100%" onclick="openAdminModal()">🔐 관리자 화면</button>
+        <div class="auth-hint" data-i18n="auth_hint_in">녹음/통독 진행상황만 자동으로 저장되고 있어요.</div>
+        <button class="topbar-btn" id="admin-open-btn" style="display:none;margin-top:12px;width:100%" onclick="openAdminModal()" data-i18n="admin_btn">🔐 관리자 화면</button>
         <div style="text-align:center;margin-top:16px">
-          <span onclick="confirmDeleteAccount()" style="font-size:11px;color:var(--text-dim);text-decoration:underline;cursor:pointer">회원 탈퇴</span>
+          <span onclick="confirmDeleteAccount()" style="font-size:11px;color:var(--text-dim);text-decoration:underline;cursor:pointer" data-i18n="delete_account">회원 탈퇴</span>
         </div>
       </div>
     </div>
@@ -330,11 +333,11 @@ audio.rec-player{width:100%;margin-top:10px}
 <div class="modal-overlay" id="admin-modal" onclick="closeModal('admin-modal',event)">
   <div class="modal" style="max-height:88vh">
     <div class="modal-header">
-      <span class="modal-title">🔐 전체 이용자 현황</span>
+      <span class="modal-title" data-i18n="admin_modal_title">🔐 전체 이용자 현황</span>
       <button class="modal-close" onclick="closeModalDirect('admin-modal')">✕</button>
     </div>
     <div class="modal-body" style="text-align:left">
-      <div id="admin-list-body">불러오는 중...</div>
+      <div id="admin-list-body" data-i18n="loading">불러오는 중...</div>
     </div>
   </div>
 </div>
@@ -343,9 +346,9 @@ audio.rec-player{width:100%;margin-top:10px}
   <div class="modal" style="max-width:320px">
     <div class="modal-body" style="text-align:center;padding:34px 22px 26px">
       <div style="font-size:36px">☁️</div>
-      <div style="font-size:16px;font-weight:800;color:var(--brand-dark);margin-top:12px;line-height:1.5">회원가입하시면<br>나만의 성경 녹음/통독의<br>모든 과정이 저장됩니다.</div>
-      <button class="brand-save-btn" style="margin-top:20px" onclick="goToLoginFromNudge()">회원가입 / 로그인하기</button>
-      <button class="cloud-logout-btn" style="margin-top:10px;width:100%;padding:8px 0" onclick="closeModalDirect('login-nudge-modal')">나중에 할게요</button>
+      <div style="font-size:16px;font-weight:800;color:var(--brand-dark);margin-top:12px;line-height:1.5" data-i18n="nudge_text">회원가입하시면<br>나만의 성경 녹음/통독의<br>모든 과정이 저장됩니다.</div>
+      <button class="brand-save-btn" style="margin-top:20px" onclick="goToLoginFromNudge()" data-i18n="nudge_btn">회원가입 / 로그인하기</button>
+      <button class="cloud-logout-btn" style="margin-top:10px;width:100%;padding:8px 0" onclick="closeModalDirect('login-nudge-modal')" data-i18n="nudge_later">나중에 할게요</button>
     </div>
   </div>
 </div>
@@ -356,7 +359,7 @@ audio.rec-player{width:100%;margin-top:10px}
       <div style="font-size:42px">🎉</div>
       <div style="font-size:21px;font-weight:800;color:var(--brand-dark);margin-top:10px" id="stage-modal-title">축 3단계 달성!</div>
       <div style="font-size:13px;color:var(--text-muted);margin-top:10px" id="stage-modal-sub">123 / 1189장 완료 (10.3%)</div>
-      <button class="brand-save-btn" style="margin-top:22px" onclick="closeModalDirect('stage-modal')">계속하기</button>
+      <button class="brand-save-btn" style="margin-top:22px" onclick="closeModalDirect('stage-modal')" data-i18n="stage_continue">계속하기</button>
     </div>
   </div>
 </div>
@@ -364,7 +367,7 @@ audio.rec-player{width:100%;margin-top:10px}
 <div class="modal-overlay" id="daily-log-modal" onclick="closeModal('daily-log-modal',event)">
   <div class="modal" style="max-height:88vh">
     <div class="modal-header">
-      <span class="modal-title">🗓 날짜별 녹음/통독 기록</span>
+      <span class="modal-title" data-i18n="daily_log_title">🗓 날짜별 녹음/통독 기록</span>
       <button class="modal-close" onclick="closeModalDirect('daily-log-modal')">✕</button>
     </div>
     <div class="modal-body">
@@ -373,7 +376,7 @@ audio.rec-player{width:100%;margin-top:10px}
         <span id="logcal-month-label"></span>
         <button onclick="changeLogMonth(1)">▶</button>
       </div>
-      <div class="logcal-grid">
+      <div class="logcal-grid" id="logcal-weekday-row">
         <div class="logcal-weekday">일</div><div class="logcal-weekday">월</div><div class="logcal-weekday">화</div>
         <div class="logcal-weekday">수</div><div class="logcal-weekday">목</div><div class="logcal-weekday">금</div><div class="logcal-weekday">토</div>
       </div>
@@ -386,7 +389,7 @@ audio.rec-player{width:100%;margin-top:10px}
 <div class="modal-overlay" id="progress-modal" onclick="closeModal('progress-modal',event)">
   <div class="modal">
     <div class="modal-header">
-      <span class="modal-title">📖 성경통독 진행 현황</span>
+      <span class="modal-title" data-i18n="progress_modal_title">📖 성경통독 진행 현황</span>
       <button class="modal-close" onclick="closeModalDirect('progress-modal')">✕</button>
     </div>
     <div class="modal-body">
@@ -394,10 +397,10 @@ audio.rec-player{width:100%;margin-top:10px}
       <div class="progress-count" id="progress-count-lg" style="font-size:16px;margin-top:12px"></div>
       <div class="progress-bar-track" style="max-width:300px;margin:8px auto 0"><div class="progress-bar-fill" id="progress-bar-fill-lg" style="width:0%"></div></div>
       <div class="progress-count" id="progress-dates" style="font-size:12.5px;margin-top:8px;display:none"></div>
-      <div style="font-size:12px;color:var(--text-muted);margin-top:10px">성경 1장을 녹음/통독 완료할 때마다 그림이 조금씩 그려져서 성경 전체 1189장을 모두 읽으면 그림이 완성됩니다.</div>
-      <button class="topbar-btn" style="margin-top:14px" onclick="openChapterChecklist()">성경별 녹음/통독 현황</button>
+      <div style="font-size:12px;color:var(--text-muted);margin-top:10px" data-i18n="progress_desc">성경 1장을 녹음/통독 완료할 때마다 그림이 조금씩 그려져서 성경 전체 1189장을 모두 읽으면 그림이 완성됩니다.</div>
+      <button class="topbar-btn" style="margin-top:14px" onclick="openChapterChecklist()" data-i18n="checklist_open_btn">성경별 녹음/통독 현황</button>
       <button class="topbar-btn" style="margin-top:8px" onclick="openHistoryModal()" id="history-count-btn">나의 성경 녹음/통독: 0회</button>
-      <button class="topbar-btn" style="margin-top:8px" onclick="confirmReset()">초기화</button>
+      <button class="topbar-btn" style="margin-top:8px" onclick="confirmReset()" data-i18n="reset_open_btn">초기화</button>
     </div>
   </div>
 </div>
@@ -405,7 +408,7 @@ audio.rec-player{width:100%;margin-top:10px}
 <div class="modal-overlay" id="history-modal" onclick="closeModal('history-modal',event)">
   <div class="modal" style="max-height:88vh">
     <div class="modal-header">
-      <span class="modal-title">📜 나의 성경 녹음/통독 횟수</span>
+      <span class="modal-title" data-i18n="history_modal_title">📜 나의 성경 녹음/통독 횟수</span>
       <button class="modal-close" onclick="closeModalDirect('history-modal')">✕</button>
     </div>
     <div class="modal-body" style="text-align:left">
@@ -417,11 +420,11 @@ audio.rec-player{width:100%;margin-top:10px}
 <div class="modal-overlay" id="checklist-modal" onclick="closeModal('checklist-modal',event)">
   <div class="modal" style="max-height:88vh">
     <div class="modal-header">
-      <span class="modal-title">📚 성경 통독 체크리스트</span>
+      <span class="modal-title" data-i18n="checklist_modal_title">📚 성경 통독 체크리스트</span>
       <button class="modal-close" onclick="closeModalDirect('checklist-modal')">✕</button>
     </div>
     <div class="modal-body" style="text-align:left">
-      <div id="checklist-body">불러오는 중...</div>
+      <div id="checklist-body" data-i18n="loading">불러오는 중...</div>
     </div>
   </div>
 </div>
@@ -429,12 +432,12 @@ audio.rec-player{width:100%;margin-top:10px}
 <div class="modal-overlay" id="certificate-modal" onclick="closeModal('certificate-modal',event)">
   <div class="modal">
     <div class="modal-header">
-      <span class="modal-title">🎉 1독 완료 기념</span>
+      <span class="modal-title" data-i18n="certificate_modal_title">🎉 1독 완료 기념</span>
       <button class="modal-close" onclick="closeModalDirect('certificate-modal')">✕</button>
     </div>
     <div class="modal-body">
       <canvas id="cert-canvas" width="1080" height="1456" style="width:100%;max-width:400px;height:auto;border-radius:10px;background:#fff"></canvas>
-      <button class="btn btn-save" style="margin-top:14px;width:100%" onclick="saveCertificateImage()">💾 이미지 저장</button>
+      <button class="btn btn-save" style="margin-top:14px;width:100%" onclick="saveCertificateImage()" data-i18n="cert_save_btn">💾 이미지 저장</button>
     </div>
   </div>
 </div>
@@ -442,18 +445,303 @@ audio.rec-player{width:100%;margin-top:10px}
 <div class="toast" id="toast"></div>
 
 <script>
+// ── 다국어(i18n) ──
+const I18N = {
+  ko: {
+    subtitle: '성경 녹음/통독 프로그램',
+    login: '로그인',
+    progress_hint: '탭해서 크게 보기',
+    rec_label_idle: '녹음 대기 중',
+    bible_search_label: '📖 성경 본문 (1장씩)',
+    search_hide: '▾ 숨기기',
+    search_show: '▸ 보이기',
+    version_gaegye: '개역개정',
+    version_easy: '쉬운성경',
+    query_placeholder: '예) 마태복음 1 / 마 1',
+    search_btn: '불러오기',
+    search_hint: '장 전체를 불러와요. 절 번호를 적어도 장만 인식돼요.',
+    reading_ref_default: '본문을 불러와주세요',
+    reading_body_empty: '위에서 책과 장을 검색하면 본문이 여기 표시돼요.<br>예) "요한복음 1" / "시 23"',
+    save_btn: '💾 저장',
+    share_btn: '📤 공유',
+    reset_btn: '🗑 초기화',
+    close_btn: '✕ 종료',
+    rec_btn: '⏺ 녹음',
+    pause_btn: '⏸ 일시정지',
+    complete_btn: '현재 본문 녹음/통독 완료',
+    complete_btn_done: '✅ 완료됨',
+    auth_email_ph: '이메일',
+    auth_pw_ph: '비밀번호 (6자 이상)',
+    login_btn: '로그인',
+    signup_btn: '회원가입',
+    auth_hint_out: '1. 이메일/비밀번호 입력후 회원가입하시면 됩니다.<br>2. 다른 기기에서도 같은 이메일/비밀번호로 로그인하면<br>통독 진행 상황이 이어집니다.',
+    auth_hint_in: '녹음/통독 진행상황만 자동으로 저장되고 있어요.',
+    logout_btn: '로그아웃',
+    admin_btn: '🔐 관리자 화면',
+    delete_account: '회원 탈퇴',
+    admin_modal_title: '🔐 전체 이용자 현황',
+    loading: '불러오는 중...',
+    nudge_text: '회원가입하시면<br>나만의 성경 녹음/통독의<br>모든 과정이 저장됩니다.',
+    nudge_btn: '회원가입 / 로그인하기',
+    nudge_later: '나중에 할게요',
+    stage_continue: '계속하기',
+    daily_log_title: '🗓 날짜별 녹음/통독 기록',
+    progress_modal_title: '📖 성경통독 진행 현황',
+    progress_desc: '성경 1장을 녹음/통독 완료할 때마다 그림이 조금씩 그려져서 성경 전체 1189장을 모두 읽으면 그림이 완성됩니다.',
+    checklist_open_btn: '성경별 녹음/통독 현황',
+    reset_open_btn: '초기화',
+    history_modal_title: '📜 나의 성경 녹음/통독 횟수',
+    checklist_modal_title: '📚 성경 통독 체크리스트',
+    certificate_modal_title: '🎉 1독 완료 기념',
+    cert_save_btn: '💾 이미지 저장',
+    weekdays: ['일','월','화','수','목','금','토'],
+    months_suffix: '월',
+    weekday_suffix: '요일',
+    chapters_done: '장 완료',
+    stage_label: '단계',
+    dates_start: '시작',
+    dates_end: '마침',
+    dates_ongoing: '진행중',
+    rec_state_recording: '녹음 중...',
+    rec_state_done: '녹음 완료 — 다시 듣고 저장하세요',
+    rec_state_paused: '일시정지됨',
+    rec_state_saved_unsaved: '녹음 완료 (저장 안 됨)',
+    resume_btn: '▶ 재개',
+    stop_btn: '⏹ 정지',
+    my_count_label: '나의 성경 녹음/통독',
+    stage_title: (n)=>`축 ${n}단계 달성!`,
+    stage_sub: (n,t,p)=>`${n} / ${t}장 완료 (${p}%)`,
+    toast_enter_book_chapter: '책과 장을 입력해주세요 (예: 마태복음 1)',
+    toast_bible_loading: '성경 데이터 로딩 중... 잠시 후 다시 시도해주세요',
+    toast_search_example: '예) 마태복음 1 / 마 1 / 시편 23',
+    toast_book_not_found: '책 이름을 찾을 수 없어요',
+    toast_chapter_not_found: '해당 장을 찾을 수 없어요',
+    toast_loaded: (book,chapter)=>`✓ ${book} ${chapter}장을 불러왔어요`,
+    toast_no_record_support: '이 브라우저는 녹음을 지원하지 않아요',
+    toast_mic_permission: '마이크 권한이 필요해요. 브라우저 설정에서 허용해주세요',
+    toast_no_pause_support: '이 브라우저는 일시정지를 지원하지 않아요',
+    toast_cannot_resume: '재개할 수 없어요',
+    toast_finish_recording_first: '먼저 녹음을 완료해주세요',
+    toast_share_failed: '공유에 실패했어요',
+    toast_check_download_notif: `✓ 화면 위쪽 '다운로드 완료' 알림을 눌러 바로 공유해 보내보세요`,
+    toast_recording_reset: '녹음이 초기화됐어요',
+    toast_ready_next_chapter: '완료! 녹음/통독 버튼을 누른 후 다음 장을 준비하세요',
+    toast_save_failed_try_share: '저장에 실패했어요. 대신 "공유" 버튼으로 저장해보세요',
+    toast_saved_native: (f)=>`✓ ${f} 저장됐어요! (내장 저장소 > Documents 폴더)`,
+    toast_save_failed: '저장에 실패했어요',
+    toast_saved_share_sheet: (f)=>`✓ ${f} 저장했어요! (공유 시트 → 파일에 저장)`,
+    toast_saved_download: (f)=>`✓ ${f} 저장(다운로드)됐어요!`,
+    toast_cloud_not_ready: '⚠️ 클라우드 설정이 아직 안 됐어요',
+    toast_enter_email_pw: '이메일과 비밀번호를 입력해주세요',
+    toast_logged_in: '✓ 로그인됐어요!',
+    toast_signup_complete: '✓ 가입 완료! 자동으로 로그인됐어요',
+    toast_logged_out: '로그아웃됐어요',
+    toast_account_deleted: '탈퇴가 완료됐어요. 그동안 함께해주셔서 감사합니다.',
+    toast_relogin_required: '보안을 위해 다시 로그인한 후 탈퇴를 진행해주세요',
+    toast_delete_error: '탈퇴 처리 중 오류가 발생했어요. 다시 시도해주세요',
+    toast_load_passage_first: '먼저 위에서 본문을 불러와주세요',
+    toast_already_completed: '이미 완료 표시한 장이에요 ✅',
+    toast_chapter_complete: (ref,n,tot)=>`🎉 ${ref} 완료! (${n} / ${tot})`,
+    toast_all_complete: (n)=>`🎊 성경 전체 1189장을 다 통독하셨어요! ${n}독째예요!`,
+    toast_admin_only: '관리자만 볼 수 있어요',
+    toast_progress_reset: '진행 상황이 초기화됐어요. 완독 횟수는 그대로 유지돼요.',
+    toast_not_complete_yet: (n,tot)=>`아직 통독이 끝나지 않았어요 (${n} / ${tot}장)`,
+    toast_image_gen_failed: '이미지 생성에 실패했어요',
+    toast_image_shared: '✓ 이미지를 공유했어요!',
+    toast_image_saved_share: '✓ 이미지를 저장했어요! (공유 시트 → 사진/파일에 저장)',
+    toast_image_saved_download: '✓ 이미지가 저장(다운로드)됐어요!',
+    err_invalid_email: '이메일 형식이 올바르지 않아요',
+    err_user_not_found: '가입되지 않은 이메일이에요',
+    err_wrong_password: '비밀번호가 틀렸어요',
+    err_invalid_credential: '이메일 또는 비밀번호가 틀렸어요',
+    err_email_in_use: '이미 가입된 이메일이에요. 로그인해주세요',
+    err_weak_password: '비밀번호는 6자 이상이어야 해요',
+    err_generic: (msg)=>`오류: ${msg}`,
+    empty_history: '아직 완독 기록이 없어요.<br>1189장을 다 채우면<br>여기에 기록이 쌓여요.',
+    my_reading_count: (n)=>`${n}독`,
+    total_days: (n)=>`총 ${n}일`,
+    no_users_yet: '아직 이용자 데이터가 없어요.',
+    total_users: (n)=>`총 ${n}명`,
+    no_log_records: (label)=>`${label} — 녹음/통독 기록이 없어요.`,
+    log_records_count: (label,n)=>`${label} (${n}장)`,
+    total_completed: (n,tot)=>`전체 ${n} / ${tot}장 완료`,
+    admin_load_failed: '불러오지 못했어요. Firestore 보안 규칙을 확인해주세요.'
+  },
+  en: {
+    subtitle: 'Bible Recording & Reading',
+    login: 'Log In',
+    progress_hint: 'Tap to view',
+    rec_label_idle: 'Ready to record',
+    bible_search_label: '📖 Bible Passage (1 chapter)',
+    search_hide: '▾ Hide',
+    search_show: '▸ Show',
+    version_gaegye: 'Korean Revised',
+    version_easy: 'Easy Version',
+    query_placeholder: 'e.g. Matthew 1',
+    search_btn: 'Load',
+    search_hint: 'Loads the whole chapter. Verse numbers are ignored — only the chapter is used.',
+    reading_ref_default: 'Load a passage above',
+    reading_body_empty: 'Search a book and chapter above to see the passage here.<br>e.g. "John 1" / "Psalm 23"',
+    save_btn: '💾 Save',
+    share_btn: '📤 Share',
+    reset_btn: '🗑 Reset',
+    close_btn: '✕ Close',
+    rec_btn: '⏺ Record',
+    pause_btn: '⏸ Pause',
+    complete_btn: 'Mark This Chapter Complete',
+    complete_btn_done: '✅ Done',
+    auth_email_ph: 'Email',
+    auth_pw_ph: 'Password (6+ characters)',
+    login_btn: 'Log In',
+    signup_btn: 'Sign Up',
+    auth_hint_out: '1. Enter your email/password and sign up.<br>2. Log in with the same email/password on another device<br>to continue your reading progress there.',
+    auth_hint_in: 'Only your recording/reading progress is saved automatically.',
+    logout_btn: 'Log Out',
+    admin_btn: '🔐 Admin Panel',
+    delete_account: 'Delete Account',
+    admin_modal_title: '🔐 All Users',
+    loading: 'Loading...',
+    nudge_text: 'Sign up to save<br>your entire Bible recording/reading<br>journey.',
+    nudge_btn: 'Sign Up / Log In',
+    nudge_later: 'Maybe Later',
+    stage_continue: 'Continue',
+    daily_log_title: '🗓 Daily Record Log',
+    progress_modal_title: '📖 Reading Progress',
+    progress_desc: 'Every time you tap "Mark Complete", the picture gets drawn a little more. Read all 1189 chapters to complete the picture.',
+    checklist_open_btn: 'Progress by Book',
+    reset_open_btn: 'Reset',
+    history_modal_title: '📜 My Completion Count',
+    checklist_modal_title: '📚 Bible Reading Checklist',
+    certificate_modal_title: '🎉 Completion Certificate',
+    cert_save_btn: '💾 Save Image',
+    weekdays: ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],
+    months_suffix: '',
+    weekday_suffix: '',
+    chapters_done: 'chapters done',
+    stage_label: 'stage',
+    dates_start: 'Start',
+    dates_end: 'End',
+    dates_ongoing: 'ongoing',
+    rec_state_recording: 'Recording...',
+    rec_state_done: 'Recording done — listen and save',
+    rec_state_paused: 'Paused',
+    rec_state_saved_unsaved: 'Recording done (not saved)',
+    resume_btn: '▶ Resume',
+    stop_btn: '⏹ Stop',
+    my_count_label: 'My Completions',
+    stage_title: (n)=>`🎉 Stage ${n} unlocked!`,
+    stage_sub: (n,tot,p)=>`${n} / ${tot} chapters done (${p}%)`,
+    toast_enter_book_chapter: 'Please enter a book and chapter (e.g. Matthew 1)',
+    toast_bible_loading: 'Bible data is still loading... please try again shortly',
+    toast_search_example: 'e.g. Matthew 1 / Psalm 23',
+    toast_book_not_found: "Couldn't find that book",
+    toast_chapter_not_found: "Couldn't find that chapter",
+    toast_loaded: (book,chapter)=>`✓ Loaded ${book} ${chapter}`,
+    toast_no_record_support: "This browser doesn't support recording",
+    toast_mic_permission: 'Microphone access is needed. Please allow it in your browser settings',
+    toast_no_pause_support: "This browser doesn't support pausing",
+    toast_cannot_resume: "Can't resume",
+    toast_finish_recording_first: 'Please finish recording first',
+    toast_share_failed: 'Sharing failed',
+    toast_check_download_notif: `✓ Tap the "Download complete" notification at the top to share it directly`,
+    toast_recording_reset: 'Recording was reset',
+    toast_ready_next_chapter: 'Done! Tap "Mark Complete" and get ready for the next chapter',
+    toast_save_failed_try_share: 'Save failed. Try the "Share" button instead',
+    toast_saved_native: (f)=>`✓ ${f} saved! (Internal storage > Documents folder)`,
+    toast_save_failed: 'Save failed',
+    toast_saved_share_sheet: (f)=>`✓ ${f} saved! (Share sheet → Save to Files)`,
+    toast_saved_download: (f)=>`✓ ${f} saved (downloaded)!`,
+    toast_cloud_not_ready: '⚠️ Cloud setup is not ready yet',
+    toast_enter_email_pw: 'Please enter your email and password',
+    toast_logged_in: '✓ Logged in!',
+    toast_signup_complete: '✓ Signed up! You are now logged in automatically',
+    toast_logged_out: 'Logged out',
+    toast_account_deleted: 'Your account has been deleted. Thank you for using the app.',
+    toast_relogin_required: 'For security, please log in again before deleting your account',
+    toast_delete_error: 'Something went wrong while deleting your account. Please try again',
+    toast_load_passage_first: 'Please load a passage above first',
+    toast_already_completed: 'This chapter is already marked complete ✅',
+    toast_chapter_complete: (ref,n,tot)=>`🎉 ${ref} complete! (${n} / ${tot})`,
+    toast_all_complete: (n)=>`🎊 You've read through the entire Bible (1189 chapters)! This is your ${n}${n===1?'st':(n===2?'nd':(n===3?'rd':'th'))} time!`,
+    toast_admin_only: 'Admins only',
+    toast_progress_reset: 'Your progress was reset. Your completion count stays the same.',
+    toast_not_complete_yet: (n,tot)=>`You haven't finished reading yet (${n} / ${tot} chapters)`,
+    toast_image_gen_failed: 'Failed to generate the image',
+    toast_image_shared: '✓ Image shared!',
+    toast_image_saved_share: '✓ Image saved! (Share sheet → Save to Photos/Files)',
+    toast_image_saved_download: '✓ Image saved (downloaded)!',
+    err_invalid_email: 'Please enter a valid email address',
+    err_user_not_found: 'No account found with this email',
+    err_wrong_password: 'Incorrect password',
+    err_invalid_credential: 'Incorrect email or password',
+    err_email_in_use: 'This email is already registered. Please log in instead',
+    err_weak_password: 'Password must be at least 6 characters',
+    err_generic: (msg)=>`Error: ${msg}`,
+    empty_history: "You haven't completed a full reading yet.<br>Read all 1189 chapters and<br>your record will appear here.",
+    my_reading_count: (n)=>`Reading #${n}`,
+    total_days: (n)=>`${n} days total`,
+    no_users_yet: 'No user data yet.',
+    total_users: (n)=>`${n} users total`,
+    no_log_records: (label)=>`${label} — no recordings for this day.`,
+    log_records_count: (label,n)=>`${label} (${n} chapters)`,
+    total_completed: (n,tot)=>`${n} / ${tot} chapters done overall`,
+    admin_load_failed: "Couldn't load the data. Please check the Firestore security rules."
+  }
+};
+
+let currentLang = localStorage.getItem('rb-lang') || 'ko';
+
+function t(key){
+  return (I18N[currentLang] && I18N[currentLang][key]) || (I18N.ko[key] || key);
+}
+
+function applyLanguage(){
+  document.documentElement.lang = currentLang === 'en' ? 'en' : 'ko';
+  document.querySelectorAll('[data-i18n]').forEach(el=>{
+    const key = el.getAttribute('data-i18n');
+    el.innerHTML = t(key);
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el=>{
+    const key = el.getAttribute('data-i18n-placeholder');
+    el.placeholder = t(key);
+  });
+  const langBtn = document.getElementById('lang-toggle');
+  if(langBtn){
+    langBtn.textContent = currentLang === 'en' ? '한국어' : 'EN';
+    langBtn.classList.toggle('active', currentLang === 'en');
+  }
+  const weekdayRow = document.getElementById('logcal-weekday-row');
+  if(weekdayRow){
+    const cells = weekdayRow.querySelectorAll('.logcal-weekday');
+    const wd = t('weekdays');
+    cells.forEach((cell, i) => { cell.textContent = wd[i]; });
+  }
+  // 언어에 따라 달라지는 동적 텍스트들도 갱신
+  if(typeof initCalBadgeText === 'function') initCalBadgeText();
+  if(typeof updateProgressUI === 'function') updateProgressUI();
+  if(typeof updateCompleteButtonState === 'function') updateCompleteButtonState();
+  if(typeof renderLogCalendar === 'function' && document.getElementById('daily-log-modal').classList.contains('open')) renderLogCalendar();
+}
+
+function toggleLanguage(){
+  currentLang = currentLang === 'en' ? 'ko' : 'en';
+  localStorage.setItem('rb-lang', currentLang);
+  applyLanguage();
+}
+
 // ── 날짜 ──
 function todayStr(){
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
-(function initCalBadge(){
+function initCalBadgeText(){
   const d = new Date();
-  const WD = ['일','월','화','수','목','금','토'];
-  document.getElementById('cal-month-label').textContent = `${d.getMonth()+1}월`;
+  const WD = t('weekdays');
+  document.getElementById('cal-month-label').textContent = currentLang === 'en' ? d.toLocaleString('en-US', {month:'short'}) : `${d.getMonth()+1}월`;
   document.getElementById('cal-day-num').textContent = d.getDate();
-  document.getElementById('cal-weekday-label').textContent = `${WD[d.getDay()]}요일`;
-})();
+  document.getElementById('cal-weekday-label').textContent = currentLang === 'en' ? WD[d.getDay()] : `${WD[d.getDay()]}요일`;
+}
+initCalBadgeText();
 
 function showToast(msg, duration){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._hideTimer);t._hideTimer=setTimeout(()=>t.classList.remove('show'),duration||2500);}
 
@@ -497,25 +785,25 @@ function toggleSearchBar(){
   const chevron = document.getElementById('search-toggle-chevron');
   const hidden = body.style.display === 'none';
   body.style.display = hidden ? '' : 'none';
-  chevron.textContent = hidden ? '▾ 숨기기' : '▸ 보이기';
+  chevron.textContent = hidden ? t('search_hide') : t('search_show');
 }
 
 function loadChapter(){
   const query = document.getElementById('bible-query').value.trim();
   const version = document.getElementById('bible-version').value;
-  if(!query){ showToast('책과 장을 입력해주세요 (예: 마태복음 1)'); return; }
-  if(!window.BIBLE_DATA){ showToast('성경 데이터 로딩 중... 잠시 후 다시 시도해주세요'); return; }
+  if(!query){ showToast(t('toast_enter_book_chapter')); return; }
+  if(!window.BIBLE_DATA){ showToast(t('toast_bible_loading')); return; }
 
   const parsed = parseChapterRef(query);
-  if(!parsed){ showToast('예) 마태복음 1 / 마 1 / 시편 23'); return; }
+  if(!parsed){ showToast(t('toast_search_example')); return; }
 
   const books = window.BIBLE_DATA.books;
   const vData = window.BIBLE_DATA[version];
   const bookIdx = books.indexOf(parsed.book);
-  if(bookIdx < 0){ showToast('책 이름을 찾을 수 없어요'); return; }
+  if(bookIdx < 0){ showToast(t('toast_book_not_found')); return; }
   const bookNo = String(bookIdx + 1);
   const chap = vData[bookNo] && vData[bookNo][parsed.chapter];
-  if(!chap){ showToast('해당 장을 찾을 수 없어요'); return; }
+  if(!chap){ showToast(t('toast_chapter_not_found')); return; }
 
   const verseNums = Object.keys(chap).map(Number).sort((a,b)=>a-b);
   currentChapterVerses = verseNums.map(n=>({num:n, text:chap[String(n)]}));
@@ -524,13 +812,26 @@ function loadChapter(){
   currentBookFull = parsed.book;
 
   renderChapter(parsed.book, parsed.chapter, version);
-  showToast(`✓ ${parsed.book} ${parsed.chapter}장을 불러왔어요`);
+  let toastBookLabel = parsed.book;
+  if(currentLang === 'en'){
+    const idx = books.indexOf(parsed.book);
+    if(idx >= 0 && EN_BOOK_NAMES[idx]) toastBookLabel = EN_BOOK_NAMES[idx];
+  }
+  showToast(I18N[currentLang].toast_loaded(toastBookLabel, parsed.chapter));
   updateCompleteButtonState();
 }
 
 function renderChapter(bookFull, chapter, version){
-  const verLabel = version === 'EASY' ? '쉬운성경' : '개역개정';
-  document.getElementById('reading-ref').textContent = `${bookFull} ${chapter}장 (${verLabel})`;
+  const verLabel = currentLang === 'en'
+    ? (version === 'EASY' ? 'Easy Version' : 'Korean Revised')
+    : (version === 'EASY' ? '쉬운성경' : '개역개정');
+  let bookLabel = bookFull;
+  if(currentLang === 'en' && window.BIBLE_DATA){
+    const idx = window.BIBLE_DATA.books.indexOf(bookFull);
+    if(idx >= 0 && EN_BOOK_NAMES[idx]) bookLabel = EN_BOOK_NAMES[idx];
+  }
+  const chapterSuffix = currentLang === 'en' ? '' : '장';
+  document.getElementById('reading-ref').textContent = `${bookLabel} ${chapter}${chapterSuffix} (${verLabel})`;
   const body = document.getElementById('reading-body');
   body.classList.remove('empty');
   body.innerHTML = currentChapterVerses.map(v=>
@@ -598,13 +899,13 @@ async function toggleRecording(){
 
 async function startRecording(){
   if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
-    showToast('이 브라우저는 녹음을 지원하지 않아요');
+    showToast(t('toast_no_record_support'));
     return;
   }
   try{
     stream = await navigator.mediaDevices.getUserMedia({audio:true});
   }catch(e){
-    showToast('마이크 권한이 필요해요. 브라우저 설정에서 허용해주세요');
+    showToast(t('toast_mic_permission'));
     return;
   }
 
@@ -630,7 +931,7 @@ async function startRecording(){
     player.style.display = 'block';
     document.getElementById('rec-review-actions').style.display = 'flex';
     document.getElementById('rec-reset-btn').disabled = false;
-    document.getElementById('rec-label').textContent = '녹음 완료 — 다시 듣고 저장하세요';
+    document.getElementById('rec-label').textContent = t('rec_state_done');
     stream.getTracks().forEach(t=>t.stop());
   };
 
@@ -641,17 +942,17 @@ async function startRecording(){
   document.getElementById('rec-dot').classList.remove('hidden');
   document.getElementById('rec-timer').classList.add('live');
   document.getElementById('rec-timer').textContent = formatTimer(0);
-  document.getElementById('rec-label').textContent = '녹음 중...';
+  document.getElementById('rec-label').textContent = t('rec_state_recording');
   document.getElementById('rec-filename').style.display = 'none';
   document.getElementById('rec-player').style.display = 'none';
   document.getElementById('rec-review-actions').style.display = 'none';
   document.getElementById('share-btn').disabled = true;
   const btn = document.getElementById('rec-btn');
-  btn.textContent = '⏹ 정지';
+  btn.textContent = t('stop_btn');
   btn.classList.add('recording');
   const pauseBtn = document.getElementById('pause-btn');
   pauseBtn.disabled = false;
-  pauseBtn.textContent = '⏸ 일시정지';
+  pauseBtn.textContent = t('pause_btn');
   pauseBtn.classList.remove('paused');
 
   startTimer();
@@ -669,24 +970,24 @@ function togglePause(){
   if(!mediaRecorder || !isRecording) return;
   if(!isPaused){
     if(mediaRecorder.state !== 'recording') return;
-    try{ mediaRecorder.pause(); }catch(e){ showToast('이 브라우저는 일시정지를 지원하지 않아요'); return; }
+    try{ mediaRecorder.pause(); }catch(e){ showToast(t('toast_no_pause_support')); return; }
     isPaused = true;
     clearInterval(timerInterval);
     document.getElementById('rec-dot').classList.add('hidden');
     document.getElementById('rec-timer').classList.remove('live');
-    document.getElementById('rec-label').textContent = '일시정지됨';
+    document.getElementById('rec-label').textContent = t('rec_state_paused');
     const pauseBtn = document.getElementById('pause-btn');
-    pauseBtn.textContent = '▶ 재개';
+    pauseBtn.textContent = t('resume_btn');
     pauseBtn.classList.add('paused');
   } else {
     if(mediaRecorder.state !== 'paused') return;
-    try{ mediaRecorder.resume(); }catch(e){ showToast('재개할 수 없어요'); return; }
+    try{ mediaRecorder.resume(); }catch(e){ showToast(t('toast_cannot_resume')); return; }
     isPaused = false;
     document.getElementById('rec-dot').classList.remove('hidden');
     document.getElementById('rec-timer').classList.add('live');
-    document.getElementById('rec-label').textContent = '녹음 중...';
+    document.getElementById('rec-label').textContent = t('rec_state_recording');
     const pauseBtn = document.getElementById('pause-btn');
-    pauseBtn.textContent = '⏸ 일시정지';
+    pauseBtn.textContent = t('pause_btn');
     pauseBtn.classList.remove('paused');
     startTimer();
   }
@@ -700,11 +1001,11 @@ function stopRecording(){
   document.getElementById('rec-dot').classList.add('hidden');
   document.getElementById('rec-timer').classList.remove('live');
   const btn = document.getElementById('rec-btn');
-  btn.textContent = '⏺ 녹음';
+  btn.textContent = t('rec_btn');
   btn.classList.remove('recording');
   const pauseBtn = document.getElementById('pause-btn');
   pauseBtn.disabled = true;
-  pauseBtn.textContent = '⏸ 일시정지';
+  pauseBtn.textContent = t('pause_btn');
   pauseBtn.classList.remove('paused');
 }
 
@@ -763,7 +1064,7 @@ async function shareBlobNative(blob, filename){
 }
 
 async function shareRecording(){
-  if(!recordedBlob){ showToast('먼저 녹음을 완료해주세요'); return; }
+  if(!recordedBlob){ showToast(t('toast_finish_recording_first')); return; }
   const filename = `${baseFilenameFor()}.${recordedExt}`;
 
   // 앱(Capacitor)으로 실행 중이면 안드로이드 FileProvider 기반 네이티브 공유 사용 — 가장 안정적
@@ -774,7 +1075,7 @@ async function shareRecording(){
     }catch(err){
       if(err && (err.message||'').includes('cancel')) return; // 사용자가 공유창을 취소함
       console.warn('네이티브 공유 실패', err);
-      showToast('공유에 실패했어요');
+      showToast(t('toast_share_failed'));
       return;
     }
   }
@@ -797,7 +1098,7 @@ async function shareRecording(){
   }
 
   // 저장 버튼을 눌러야만 공유가 활성화되므로 파일은 이미 다운로드되어 있음 — 안내만 표시
-  showToast(`✓ 화면 위쪽 '다운로드 완료' 알림을 눌러 바로 공유해 보내보세요`, 5000);
+  showToast(t('toast_check_download_notif'), 5000);
 }
 
 const isIOS = /iP(hone|od|ad)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
@@ -814,10 +1115,10 @@ function resetRecording(){
   document.getElementById('rec-review-actions').style.display = 'none';
   document.getElementById('rec-filename').style.display = 'none';
   document.getElementById('rec-timer').textContent = '00:00';
-  document.getElementById('rec-label').textContent = '녹음 대기 중';
+  document.getElementById('rec-label').textContent = t('rec_label_idle');
   document.getElementById('share-btn').disabled = true;
   elapsedSec = 0;
-  showToast('녹음이 초기화됐어요');
+  showToast(t('toast_recording_reset'));
 }
 
 function closeReviewBar(){
@@ -833,50 +1134,68 @@ function closeReviewBar(){
     document.getElementById('rec-review-actions').style.display = 'none';
     document.getElementById('rec-filename').style.display = 'none';
     document.getElementById('rec-timer').textContent = '00:00';
-    document.getElementById('rec-label').textContent = '녹음 대기 중';
+    document.getElementById('rec-label').textContent = t('rec_label_idle');
     document.getElementById('share-btn').disabled = true;
     elapsedSec = 0;
-    showToast('완료! 녹음/통독 버튼을 누른 후 다음 장을 준비하세요');
+    showToast(t('toast_ready_next_chapter'));
     return;
   }
   // 아직 저장 전이면 녹음은 그대로 두고 확인 바만 닫아요
   document.getElementById('rec-player').style.display = 'none';
   document.getElementById('rec-review-actions').style.display = 'none';
   document.getElementById('rec-filename').style.display = 'none';
-  document.getElementById('rec-label').textContent = recordedBlob ? '녹음 완료 (저장 안 됨)' : '녹음 대기 중';
+  document.getElementById('rec-label').textContent = recordedBlob ? t('rec_state_saved_unsaved') : t('rec_label_idle');
 }
 
 async function saveRecording(){
-  if(!recordedBlob){ showToast('먼저 녹음을 완료해주세요'); return; }
+  if(!recordedBlob){ showToast(t('toast_finish_recording_first')); return; }
   const filename = buildFilename();
   const fullFilename = `${filename}.${recordedExt}`;
-  const file = new File([recordedBlob], fullFilename, {type: cleanMimeType(recordedMimeType)});
 
   let saved = false;
 
-  // iOS Safari는 <a download>가 blob 파일명을 제대로 반영하지 않는 경우가 많아
-  // 공유 시트(파일 앱에 저장)를 우선 사용해서 원하는 파일명 그대로 저장되게 함
-  if(isIOS && navigator.canShare && navigator.canShare({files:[file]})){
+  // 앱(Capacitor)으로 실행 중이면 WebView가 <a download>를 지원하지 않으므로
+  // Filesystem 플러그인으로 실제 기기 저장소에 파일을 직접 써줌
+  if(isNativeApp()){
     try{
-      await navigator.share({files:[file]});
+      const base64 = await blobToBase64(recordedBlob);
+      await window.Capacitor.Plugins.Filesystem.writeFile({
+        path: fullFilename,
+        data: base64,
+        directory: 'DOCUMENTS'
+      });
       saved = true;
     }catch(err){
-      if(err && err.name === 'AbortError'){
-        return; // 사용자가 공유 시트를 취소함 — 다시 시도하지 않음
-      }
-      saved = false; // 공유 실패 시 아래 다운로드 방식으로 대체
+      console.warn('네이티브 저장 실패', err);
+      showToast(t('toast_save_failed_try_share'));
     }
-  }
+  } else {
+    const file = new File([recordedBlob], fullFilename, {type: cleanMimeType(recordedMimeType)});
 
-  if(!saved){
-    const url = URL.createObjectURL(recordedBlob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = fullFilename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setTimeout(()=>URL.revokeObjectURL(url), 3000);
+    // iOS Safari는 <a download>가 blob 파일명을 제대로 반영하지 않는 경우가 많아
+    // 공유 시트(파일 앱에 저장)를 우선 사용해서 원하는 파일명 그대로 저장되게 함
+    if(isIOS && navigator.canShare && navigator.canShare({files:[file]})){
+      try{
+        await navigator.share({files:[file]});
+        saved = true;
+      }catch(err){
+        if(err && err.name === 'AbortError'){
+          return; // 사용자가 공유 시트를 취소함 — 다시 시도하지 않음
+        }
+        saved = false; // 공유 실패 시 아래 다운로드 방식으로 대체
+      }
+    }
+
+    if(!saved){
+      const url = URL.createObjectURL(recordedBlob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fullFilename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(()=>URL.revokeObjectURL(url), 3000);
+    }
   }
 
   const used = JSON.parse(localStorage.getItem('rb-saved-filenames')||'[]');
@@ -888,7 +1207,12 @@ async function saveRecording(){
   document.getElementById('rec-reset-btn').disabled = true;
   document.getElementById('share-btn').disabled = false;
   recordingSaved = true;
-  showToast(saved ? `✓ ${fullFilename} 저장했어요! (공유 시트 → 파일에 저장)` : `✓ ${fullFilename} 저장(다운로드)됐어요!`);
+
+  if(isNativeApp()){
+    showToast(saved ? I18N[currentLang].toast_saved_native(fullFilename) : t('toast_save_failed'), 5000);
+  } else {
+    showToast(saved ? I18N[currentLang].toast_saved_share_sheet(fullFilename) : I18N[currentLang].toast_saved_download(fullFilename));
+  }
 }
 
 // ── ☁️ Firebase 이메일 로그인 + 통독 진행 동기화 (큐티노트 앱과 같은 프로젝트 사용) ──
@@ -942,36 +1266,36 @@ function updateCloudBar(){
 
 function authErrorMessage(err){
   const map = {
-    'auth/invalid-email':'이메일 형식이 올바르지 않아요',
-    'auth/user-not-found':'가입되지 않은 이메일이에요',
-    'auth/wrong-password':'비밀번호가 틀렸어요',
-    'auth/invalid-credential':'이메일 또는 비밀번호가 틀렸어요',
-    'auth/email-already-in-use':'이미 가입된 이메일이에요. 로그인해주세요',
-    'auth/weak-password':'비밀번호는 6자 이상이어야 해요',
+    'auth/invalid-email': t('err_invalid_email'),
+    'auth/user-not-found': t('err_user_not_found'),
+    'auth/wrong-password': t('err_wrong_password'),
+    'auth/invalid-credential': t('err_invalid_credential'),
+    'auth/email-already-in-use': t('err_email_in_use'),
+    'auth/weak-password': t('err_weak_password'),
   };
-  return map[err.code] || ('오류: ' + err.message);
+  return map[err.code] || I18N[currentLang].err_generic(err.message);
 }
 
 async function doLogin(){
-  if(!fbReady){ showToast('⚠️ 클라우드 설정이 아직 안 됐어요'); return; }
+  if(!fbReady){ showToast(t('toast_cloud_not_ready')); return; }
   const email = document.getElementById('auth-email').value.trim();
   const pw = document.getElementById('auth-password').value;
-  if(!email || !pw){ showToast('이메일과 비밀번호를 입력해주세요'); return; }
+  if(!email || !pw){ showToast(t('toast_enter_email_pw')); return; }
   try{
     await auth.signInWithEmailAndPassword(email, pw);
-    showToast('✓ 로그인됐어요!');
+    showToast(t('toast_logged_in'));
     closeModalDirect('auth-modal');
   }catch(e){ showToast(authErrorMessage(e)); }
 }
 
 async function doSignup(){
-  if(!fbReady){ showToast('⚠️ 클라우드 설정이 아직 안 됐어요'); return; }
+  if(!fbReady){ showToast(t('toast_cloud_not_ready')); return; }
   const email = document.getElementById('auth-email').value.trim();
   const pw = document.getElementById('auth-password').value;
-  if(!email || !pw){ showToast('이메일과 비밀번호를 입력해주세요'); return; }
+  if(!email || !pw){ showToast(t('toast_enter_email_pw')); return; }
   try{
     await auth.createUserWithEmailAndPassword(email, pw);
-    showToast('✓ 가입 완료! 자동으로 로그인됐어요');
+    showToast(t('toast_signup_complete'));
     closeModalDirect('auth-modal');
   }catch(e){ showToast(authErrorMessage(e)); }
 }
@@ -979,7 +1303,7 @@ async function doSignup(){
 async function doLogout(){
   if(!fbReady) return;
   await auth.signOut();
-  showToast('로그아웃됐어요');
+  showToast(t('toast_logged_out'));
   closeModalDirect('auth-modal');
 }
 
@@ -1006,15 +1330,15 @@ async function confirmDeleteAccount(){
     closeModalDirect('auth-modal');
     updateProgressUI();
     updateCompleteButtonState();
-    showToast('탈퇴가 완료됐어요. 그동안 함께해주셔서 감사합니다.');
+    showToast(t('toast_account_deleted'));
   }catch(e){
     if(e && e.code === 'auth/requires-recent-login'){
-      showToast('보안을 위해 다시 로그인한 후 탈퇴를 진행해주세요');
+      showToast(t('toast_relogin_required'));
       await auth.signOut();
       closeModalDirect('auth-modal');
     } else {
       console.warn('탈퇴 실패', e);
-      showToast('탈퇴 처리 중 오류가 발생했어요. 다시 시도해주세요');
+      showToast(t('toast_delete_error'));
     }
   }
 }
@@ -1166,12 +1490,12 @@ function updateProgressUI(){
     localStorage.removeItem('rb-end-date');
   }
 
-  document.getElementById('progress-count').textContent = `${n} / ${total} 장 완료 · ${Math.floor(n/41)}/29단계`;
+  document.getElementById('progress-count').textContent = `${n} / ${total} ${t('chapters_done')} · ${Math.floor(n/41)}/29${t('stage_label')}`;
   document.getElementById('progress-bar-fill').style.width = pct+'%';
   renderMosaic(document.getElementById('mini-mosaic'), revealed);
 
   const lg = document.getElementById('progress-count-lg');
-  if(lg) lg.textContent = `${n} / ${total} 장 완료 (${pct}%) · ${Math.floor(n/41)}/29단계`;
+  if(lg) lg.textContent = `${n} / ${total} ${t('chapters_done')} (${pct}%) · ${Math.floor(n/41)}/29${t('stage_label')}`;
   const fillLg = document.getElementById('progress-bar-fill-lg');
   if(fillLg) fillLg.style.width = pct+'%';
   renderMosaic(document.getElementById('full-mosaic'), revealed);
@@ -1181,7 +1505,7 @@ function updateProgressUI(){
     const startDate = localStorage.getItem('rb-start-date');
     const endDate = localStorage.getItem('rb-end-date');
     if(startDate){
-      datesEl.textContent = endDate ? `📅 시작 ${startDate}  →  마침 ${endDate}` : `📅 시작 ${startDate}  →  진행중`;
+      datesEl.textContent = endDate ? `📅 ${t('dates_start')} ${startDate}  →  ${t('dates_end')} ${endDate}` : `📅 ${t('dates_start')} ${startDate}  →  ${t('dates_ongoing')}`;
       datesEl.style.display = 'block';
     } else {
       datesEl.style.display = 'none';
@@ -1194,25 +1518,25 @@ function updateCompleteButtonState(){
   const btn = document.getElementById('complete-btn');
   if(!btn) return;
   if(!currentBookFull || !currentChapterNum){
-    btn.textContent = '현재 본문 녹음/통독 완료';
+    btn.textContent = t('complete_btn');
     btn.classList.remove('done');
     return;
   }
   const completed = getCompletedSet();
   const done = completed.has(chapterKey(currentBookFull, currentChapterNum));
-  btn.textContent = done ? '✅ 완료됨' : '현재 본문 녹음/통독 완료';
+  btn.textContent = done ? t('complete_btn_done') : t('complete_btn');
   btn.classList.toggle('done', done);
 }
 
 function markComplete(){
   if(!currentBookFull || !currentChapterNum){
-    showToast('먼저 위에서 본문을 불러와주세요');
+    showToast(t('toast_load_passage_first'));
     return;
   }
   const key = chapterKey(currentBookFull, currentChapterNum);
   const completed = getCompletedSet();
   if(completed.has(key)){
-    showToast('이미 완료 표시한 장이에요 ✅');
+    showToast(t('toast_already_completed'));
     return;
   }
 
@@ -1257,7 +1581,7 @@ function markComplete(){
       showStageModal(stageNum, revealed.size, target.size);
     }
   } else if(revealed.size < target.size){
-    showToast(`🎉 ${parsed_currentRef()} 완료! (${revealed.size} / ${target.size})`);
+    showToast(I18N[currentLang].toast_chapter_complete(parsed_currentRef(), revealed.size, target.size));
   }
 }
 
@@ -1272,8 +1596,9 @@ function goToLoginFromNudge(){
 
 function showStageModal(stageNum, revealedCount, total){
   const pct = Math.round((revealedCount/total)*1000)/10;
-  document.getElementById('stage-modal-title').textContent = `축 ${stageNum}단계 달성!`;
-  document.getElementById('stage-modal-sub').textContent = `${revealedCount} / ${total}장 완료 (${pct}%)`;
+  const dict = I18N[currentLang] || I18N.ko;
+  document.getElementById('stage-modal-title').textContent = dict.stage_title(stageNum);
+  document.getElementById('stage-modal-sub').textContent = dict.stage_sub(revealedCount, total, pct);
   openModal('stage-modal');
 }
 
@@ -1288,11 +1613,17 @@ async function archiveCompletion(){
 
   openModal('certificate-modal');
   await renderCertificateCanvas(document.getElementById('cert-canvas'), start, end, history.length);
-  showToast(`🎊 성경 전체 1189장을 다 통독하셨어요! ${history.length}독째예요!`);
+  showToast(I18N[currentLang].toast_all_complete(history.length));
 }
 
 function parsed_currentRef(){
-  return `${currentBookFull} ${currentChapterNum}장`;
+  let bookLabel = currentBookFull;
+  if(currentLang === 'en' && window.BIBLE_DATA){
+    const idx = window.BIBLE_DATA.books.indexOf(currentBookFull);
+    if(idx >= 0 && EN_BOOK_NAMES[idx]) bookLabel = EN_BOOK_NAMES[idx];
+  }
+  const suffix = currentLang === 'en' ? '' : '장';
+  return `${bookLabel} ${currentChapterNum}${suffix}`;
 }
 
 function getCompletionLog(){
@@ -1321,7 +1652,9 @@ function changeLogMonth(delta){
 function renderLogCalendar(){
   const y = logCalMonth.getFullYear();
   const m = logCalMonth.getMonth();
-  document.getElementById('logcal-month-label').textContent = `${y}년 ${m+1}월`;
+  document.getElementById('logcal-month-label').textContent = currentLang === 'en'
+    ? logCalMonth.toLocaleString('en-US', {month:'long', year:'numeric'})
+    : `${y}년 ${m+1}월`;
 
   const log = getCompletionLog();
   const countByDate = {};
@@ -1365,11 +1698,12 @@ function showLogDayDetail(dateStr){
   const label = `${yy}.${mm}.${dd}`;
 
   if(!log.length){
-    detail.innerHTML = `<div style="font-size:12.5px;color:var(--text-muted);text-align:center;padding:14px 0">${label} — 녹음/통독 기록이 없어요.</div>`;
+    detail.innerHTML = `<div style="font-size:12.5px;color:var(--text-muted);text-align:center;padding:14px 0">${I18N[currentLang].no_log_records(label)}</div>`;
     return;
   }
-  detail.innerHTML = `<div style="font-size:12.5px;font-weight:800;color:var(--brand-dark);margin-bottom:6px">${label} (${log.length}장)</div>` +
-    log.map(e => `<div class="logday-item"><span class="logday-item-icon">📖</span>${escapeHtml(e.book)} ${escapeHtml(e.chapter)}장</div>`).join('');
+  const chapterSuffix = currentLang === 'en' ? '' : '장';
+  detail.innerHTML = `<div style="font-size:12.5px;font-weight:800;color:var(--brand-dark);margin-bottom:6px">${I18N[currentLang].log_records_count(label, log.length)}</div>` +
+    log.map(e => `<div class="logday-item"><span class="logday-item-icon">📖</span>${escapeHtml(e.book)} ${escapeHtml(e.chapter)}${chapterSuffix}</div>`).join('');
 }
 
 function getHistory(){
@@ -1383,32 +1717,33 @@ function updateHistoryButtonLabel(){
   const btn = document.getElementById('history-count-btn');
   if(!btn) return;
   const n = getHistory().length;
-  btn.textContent = `나의 성경 녹음/통독: ${n}회`;
+  btn.textContent = `${t('my_count_label')}: ${n}${currentLang==='en' ? '' : '회'}`;
 }
 
 async function openAdminModal(){
-  if(!isAdminUser()){ showToast('관리자만 볼 수 있어요'); return; }
+  if(!isAdminUser()){ showToast(t('toast_admin_only')); return; }
   openModal('admin-modal');
   const body = document.getElementById('admin-list-body');
-  body.innerHTML = '불러오는 중...';
+  body.innerHTML = t('loading');
   try{
     const snap = await db.collection('recordBibleStats').orderBy('historyCount', 'desc').get();
     if(snap.empty){
-      body.innerHTML = '<div style="color:var(--text-muted);font-size:13px;text-align:center;padding:20px 0">아직 이용자 데이터가 없어요.</div>';
+      body.innerHTML = `<div style="color:var(--text-muted);font-size:13px;text-align:center;padding:20px 0">${t('no_users_yet')}</div>`;
       return;
     }
-    let html = `<div style="font-size:12px;color:var(--text-muted);margin-bottom:10px">총 ${snap.size}명</div>`;
+    let html = `<div style="font-size:12px;color:var(--text-muted);margin-bottom:10px">${I18N[currentLang].total_users(snap.size)}</div>`;
     snap.forEach(doc=>{
       const d = doc.data();
+      const countLabel = currentLang === 'en' ? `${d.historyCount || 0}x` : `${d.historyCount || 0}독`;
       html += `<div class="admin-item">
         <span class="admin-email">${escapeHtml(d.email || doc.id)}</span>
-        <span class="admin-count">${d.historyCount || 0}독 · ${d.currentProgress||0}/${d.currentTotal||1189}</span>
+        <span class="admin-count">${countLabel} · ${d.currentProgress||0}/${d.currentTotal||1189}</span>
       </div>`;
     });
     body.innerHTML = html;
   }catch(e){
     console.warn('관리자 데이터 로드 실패', e);
-    body.innerHTML = '<div style="color:var(--text-muted);font-size:13px;text-align:center;padding:20px 0">불러오지 못했어요. Firestore 보안 규칙을 확인해주세요.</div>';
+    body.innerHTML = `<div style="color:var(--text-muted);font-size:13px;text-align:center;padding:20px 0">${t('admin_load_failed')}</div>`;
   }
 }
 
@@ -1422,16 +1757,16 @@ function renderHistoryList(){
   const body = document.getElementById('history-list-body');
   const history = getHistory();
   if(!history.length){
-    body.innerHTML = '<div style="color:var(--text-muted);font-size:13px;text-align:center;padding:24px 0">아직 완독 기록이 없어요.<br>1189장을 다 채우면<br>여기에 기록이 쌓여요.</div>';
+    body.innerHTML = `<div style="color:var(--text-muted);font-size:13px;text-align:center;padding:24px 0">${t('empty_history')}</div>`;
     return;
   }
   body.innerHTML = history.map((h, i) => {
     const days = daysBetween(h.start, h.end);
     return `<div class="hist-item" onclick="viewHistoryCertificate(${i})">
-      <div class="hist-num">${i+1}독</div>
+      <div class="hist-num">${I18N[currentLang].my_reading_count(i+1)}</div>
       <div class="hist-info">
         <div class="hist-dates">${formatDateDots(h.start)} → ${formatDateDots(h.end)}</div>
-        <div class="hist-days">총 ${days}일</div>
+        <div class="hist-days">${I18N[currentLang].total_days(days)}</div>
       </div>
       <div class="hist-arrow">›</div>
     </div>`;
@@ -1456,7 +1791,7 @@ function confirmReset(){
   updateProgressUI();
   updateCompleteButtonState();
   saveProgressToCloud();
-  showToast('진행 상황이 초기화됐어요. 완독 횟수는 그대로 유지돼요.');
+  showToast(t('toast_progress_reset'));
 }
 
 function daysBetween(d1, d2){
@@ -1602,7 +1937,7 @@ async function openCertificate(){
   const revealed = getRevealedSet();
   const target = getMosaicTargetSet();
   if(revealed.size < target.size){
-    showToast(`아직 통독이 끝나지 않았어요 (${revealed.size} / ${target.size}장)`);
+    showToast(I18N[currentLang].toast_not_complete_yet(revealed.size, target.size));
     return;
   }
   if(!localStorage.getItem('rb-end-date')){
@@ -1617,7 +1952,7 @@ async function openCertificate(){
 function saveCertificateImage(){
   const canvas = document.getElementById('cert-canvas');
   canvas.toBlob(async (blob)=>{
-    if(!blob){ showToast('이미지 생성에 실패했어요'); return; }
+    if(!blob){ showToast(t('toast_image_gen_failed')); return; }
     const filename = `성경통독_1독완료_${todayStr().replace(/-/g,'')}.png`;
 
     if(isNativeApp()){
@@ -1627,11 +1962,11 @@ function saveCertificateImage(){
           path: filename, data: base64, directory: 'CACHE'
         });
         await window.Capacitor.Plugins.Share.share({ title: filename, url: writeResult.uri, dialogTitle: '이미지 공유하기' });
-        showToast('✓ 이미지를 공유했어요!');
+        showToast(t('toast_image_shared'));
       }catch(err){
         if(!(err && (err.message||'').includes('cancel'))){
           console.warn('네이티브 공유 실패', err);
-          showToast('공유에 실패했어요');
+          showToast(t('toast_share_failed'));
         }
       }
       return;
@@ -1660,7 +1995,7 @@ function saveCertificateImage(){
       document.body.removeChild(a);
       setTimeout(()=>URL.revokeObjectURL(url), 3000);
     }
-    showToast(saved ? '✓ 이미지를 저장했어요! (공유 시트 → 사진/파일에 저장)' : '✓ 이미지가 저장(다운로드)됐어요!');
+    showToast(saved ? t('toast_image_saved_share') : t('toast_image_saved_download'));
   }, 'image/png');
 }
 
@@ -1675,19 +2010,23 @@ function openChapterChecklist(){
   openModal('checklist-modal');
 }
 
+const EN_BOOK_NAMES = ['Genesis','Exodus','Leviticus','Numbers','Deuteronomy','Joshua','Judges','Ruth','1 Samuel','2 Samuel','1 Kings','2 Kings','1 Chronicles','2 Chronicles','Ezra','Nehemiah','Esther','Job','Psalms','Proverbs','Ecclesiastes','Song of Songs','Isaiah','Jeremiah','Lamentations','Ezekiel','Daniel','Hosea','Joel','Amos','Obadiah','Jonah','Micah','Nahum','Habakkuk','Zephaniah','Haggai','Zechariah','Malachi','Matthew','Mark','Luke','John','Acts','Romans','1 Corinthians','2 Corinthians','Galatians','Ephesians','Philippians','Colossians','1 Thessalonians','2 Thessalonians','1 Timothy','2 Timothy','Titus','Philemon','Hebrews','James','1 Peter','2 Peter','1 John','2 John','3 John','Jude','Revelation'];
+
 function renderChapterChecklist(){
   const body = document.getElementById('checklist-body');
-  if(!window.BIBLE_DATA){ body.innerHTML = '성경 데이터 로딩 중이에요. 잠시 후 다시 열어주세요.'; return; }
+  if(!window.BIBLE_DATA){ body.innerHTML = t('toast_bible_loading'); return; }
 
   const books = window.BIBLE_DATA.books;
   const vData = window.BIBLE_DATA.GAEGYE;
   const completed = getCompletedSet();
+  const chapterSuffix = currentLang === 'en' ? '' : '장';
 
   let doneTotal = 0, chapterTotal = 0;
   let html = '';
 
   for(let i=0; i<books.length; i++){
     const bookFull = books[i];
+    const bookLabel = currentLang === 'en' ? (EN_BOOK_NAMES[i] || bookFull) : bookFull;
     const bookNo = String(i+1);
     const chapters = vData[bookNo] ? Object.keys(vData[bookNo]).map(Number).sort((a,b)=>a-b) : [];
     if(!chapters.length) continue;
@@ -1703,18 +2042,19 @@ function renderChapterChecklist(){
     chapterTotal += chapters.length;
 
     html += `<div class="chk-book">
-      <div class="chk-book-name"><span>${escapeHtml(bookFull)}</span><span class="chk-book-count">${bookDone}/${chapters.length}장</span></div>
+      <div class="chk-book-name"><span>${escapeHtml(bookLabel)}</span><span class="chk-book-count">${bookDone}/${chapters.length}${chapterSuffix}</span></div>
       <div class="chk-grid">${cellsHtml}</div>
     </div>`;
   }
 
-  body.innerHTML = `<div class="chk-summary">전체 ${doneTotal} / ${chapterTotal}장 완료</div>` + html;
+  body.innerHTML = `<div class="chk-summary">${I18N[currentLang].total_completed(doneTotal, chapterTotal)}</div>` + html;
 }
 
 function openModal(id){ document.getElementById(id).classList.add('open'); }
 function closeModal(id,e){ if(e.target===document.getElementById(id)) closeModalDirect(id); }
 function closeModalDirect(id){ document.getElementById(id).classList.remove('open'); }
 
+applyLanguage();
 updateProgressUI();
 updateCompleteButtonState();
 
